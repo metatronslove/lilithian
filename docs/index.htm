@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lilithian · Cadı Bildirgeci</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/astronomy-engine@2.1.19/astronomy.browser.min.js">
     </script>
     <style>
-        /* --- Tüm stiller aynı, sadece temel olarak kısaltıldı --- */
         * {
             margin: 0;
             padding: 0;
@@ -502,7 +501,7 @@
 
     <script>
         // ============================================================
-        // 0. KAN DAMLASI (AYNI)
+        // 0. KAN DAMLASI
         // ============================================================
         document.addEventListener('click', e => {
             const x = e.clientX,
@@ -624,27 +623,28 @@
         };
 
         // ============================================================
-        // 4. ASTRONOMİ – ÇALIŞAN PROJEDEKİ GİBİ
+        // 4. ASTRONOMİ – ÇALIŞAN PROJEDEN (calculateRiseSet)
         // ============================================================
         const fmt = d => d && d instanceof Date && !isNaN(d) ? String(d.getHours()).padStart(2, '0') + ':' + String(d
             .getMinutes()).padStart(2, '0') : '—';
 
-        // ÇALIŞAN PROJEDEKİ GİBİ: 5. parametre dayLimit = 300
+        // ÇALIŞAN PROJEDEKİ calculateRiseSet (5. parametre dayLimit = 300)
         function calculateRiseSet(bodyId, observer, date, direction) {
             try {
                 const time = Astronomy.SearchRiseSet(bodyId, observer, direction, date, 300);
                 return time ? new Date(time) : null;
             } catch (e) {
+                console.error(`Doğuş/batış hatası (${bodyId}):`, e);
                 return null;
             }
         }
 
-        function calculatePosition(bodyId, date, lat, lon) {
+        // Gezegen konumu (burç için)
+        function getPlanetEclipticLongitude(bodyId, date) {
             try {
-                const observer = new Astronomy.Observer(lat, lon, 0);
-                const { ra, dec } = Astronomy.Equator(bodyId, date, observer, true, true);
-                const { altitude, azimuth } = Astronomy.Horizon(date, observer, ra, dec, 'normal');
-                return { altitude, azimuth };
+                const eq = Astronomy.Equator(bodyId, date, false);
+                const ecl = Astronomy.EquatorToEcliptic(eq);
+                return ecl.lon;
             } catch (e) {
                 return null;
             }
@@ -656,9 +656,7 @@
             ];
             return signs[Math.floor(((deg % 360) + 360) % 360 / 30) % 12];
         };
-        const planetLon = (body, date) => {
-            try { return Astronomy.EquatorToEcliptic(Astronomy.Equator(body, date, false)).lon; } catch { return null; }
-        };
+
         const lilithLon = date => {
             try {
                 const jd = Astronomy.JulianDay(date),
@@ -668,7 +666,7 @@
         };
 
         // ============================================================
-        // 5. STATİK İÇERİK (HEMEN, SETTIMEOUT YOK)
+        // 5. STATİK İÇERİK
         // ============================================================
         function renderStatic() {
             const now = new Date(),
@@ -704,7 +702,7 @@
         }
 
         // ============================================================
-        // 6. SIRALI HESAPLAMA (SETTIMEOUT İLE) – DOĞRU ÇALIŞAN
+        // 6. SIRALI GÖKYÜZÜ HESAPLAMA (setTimeout ile teker teker)
         // ============================================================
         const BODIES = [
             { id: 'Sun', name: 'Güneş', symbol: '☉', cls: 'symbol-sun' },
@@ -724,7 +722,8 @@
             lat = 41.0082,
             lng = 28.9784,
             locReady = false,
-            zSign = zodiac();
+            zSign = zodiac(),
+            observer = null;
 
         function updateSkyTable() {
             document.getElementById('skyTableContainer').innerHTML = `
@@ -742,6 +741,7 @@
 
         function renderBody(idx) {
             if (idx >= BODIES.length) {
+                // Lilith ekle
                 const lon = lilithLon(new Date());
                 if (lon !== null) {
                     skyRows.push(
@@ -760,29 +760,32 @@
 
             const b = BODIES[idx];
             const now = new Date();
-            const observer = new Astronomy.Observer(lat, lng, 0);
 
             try {
+                // Doğuş ve batış hesapla (5. parametre dayLimit=300)
                 const rise = calculateRiseSet(b.id, observer, now, Astronomy.Rise);
                 const set = calculateRiseSet(b.id, observer, now, Astronomy.Set);
-                const riseStr = rise ? fmt(rise) : '—';
-                const setStr = set ? fmt(set) : '—';
+                const riseStr = fmt(rise);
+                const setStr = fmt(set);
 
+                // Burç bilgisi
                 let sign = '';
                 if (b.id !== 'Sun' && b.id !== 'Moon') {
-                    const lon = planetLon(b.id, now);
+                    const lon = getPlanetEclipticLongitude(b.id, now);
                     if (lon !== null) sign = ` · ${signFromLon(lon)}`;
                 } else if (b.id === 'Sun') {
                     sign = ` · ${zSign}`;
                 } else {
-                    const lon = planetLon(b.id, now);
+                    const lon = getPlanetEclipticLongitude(b.id, now);
                     if (lon !== null) sign = ` · ${signFromLon(lon)}`;
                 }
 
                 skyRows.push(
                     `<tr><td class="body-name"><span class="symbol ${b.cls}">${b.symbol}</span> ${b.name}</td><td class="time">${riseStr}</td><td class="time">${setStr}</td><td class="info">${sign}</td></tr>`
                     );
+
             } catch (e) {
+                console.error(`${b.name} hatası:`, e);
                 skyRows.push(
                     `<tr><td class="body-name"><span class="symbol ${b.cls}">${b.symbol}</span> ${b.name}</td><td colspan="3" class="info">—</td></tr>`
                     );
@@ -791,30 +794,34 @@
             bodyIdx = idx + 1;
             updateSkyTable();
 
-            // SIRALI HESAPLAMA: Bu setTimeout DOĞRU ve GEREKLİ
+            // SIRALI HESAPLAMA: 50ms gecikme ile devam et (DOĞRU ÇALIŞAN)
             setTimeout(() => renderBody(bodyIdx), 50);
         }
 
         function renderSky() {
-            if (skyDone || typeof Astronomy === 'undefined' || !locReady) {
-                // Kütüphane veya konum hazır değilse, sadece mesaj göster, setTimeout ile bekleme yapma
-                if (!skyDone && typeof Astronomy === 'undefined') {
-                    document.getElementById('skyTableContainer').innerHTML =
-                        '<div class="sky-loading">⏳ Astronomi verileri yükleniyor…</div>';
-                    // Burada setTimeout kullanmıyorum, çünkü init içinde zaten interval var.
-                } else if (!skyDone && !locReady) {
-                    document.getElementById('skyTableContainer').innerHTML =
-                        '<div class="sky-loading">📍 Konum bekleniyor…</div>';
-                }
+            if (skyDone) return;
+            if (typeof Astronomy === 'undefined') {
+                document.getElementById('skyTableContainer').innerHTML =
+                    '<div class="sky-loading">⏳ Astronomi verileri yükleniyor…</div>';
+                setTimeout(renderSky, 2000);
+                return;
+            }
+            if (!locReady) {
+                document.getElementById('skyTableContainer').innerHTML =
+                    '<div class="sky-loading">📍 Konum bekleniyor…</div>';
+                setTimeout(renderSky, 1000);
                 return;
             }
 
+            // Observer'ı oluştur
+            observer = new Astronomy.Observer(lat, lng, 0);
             document.getElementById('locationDisplay').textContent =
                 `📍 Enlem: ${lat.toFixed(4)}°, Boylam: ${lng.toFixed(4)}°`;
+
+            // Sıralı hesaplamayı başlat
             skyRows = [];
             bodyIdx = 0;
             zSign = zodiac();
-            // Sıralı hesaplamayı başlat
             renderBody(0);
         }
 
@@ -823,21 +830,15 @@
         // ============================================================
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
-                pos => {
-                    lat = pos.coords.latitude;
+                pos => { lat = pos.coords.latitude;
                     lng = pos.coords.longitude;
                     locReady = true;
-                    renderSky();
-                },
-                () => {
-                    locReady = true;
-                    renderSky();
-                }, { timeout: 8000, enableHighAccuracy: true }
+                    renderSky(); },
+                () => { locReady = true;
+                    renderSky(); }, { timeout: 8000, enableHighAccuracy: true }
             );
-        } else {
-            locReady = true;
-            renderSky();
-        }
+        } else { locReady = true;
+            renderSky(); }
 
         // ============================================================
         // 8. BAŞLAT
@@ -849,7 +850,6 @@
             initDone = true;
             renderStatic();
 
-            // Kütüphane yüklenene kadar bekle (sadece burada interval var)
             if (typeof Astronomy !== 'undefined') {
                 renderSky();
             } else {
@@ -858,8 +858,7 @@
                         clearInterval(iv);
                         renderSky();
                     }
-                }, 200);
-                // 10 saniye sonra interval temizlenir, hata mesajı gösterilir
+                }, 500);
                 setTimeout(() => {
                     clearInterval(iv);
                     if (typeof Astronomy === 'undefined') {
