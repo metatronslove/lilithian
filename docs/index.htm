@@ -7,11 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet">
-    <!-- SADECE TARAYICI SÜRÜMÜ -->
     <script src="https://unpkg.com/astronomy-engine@2.1.19/astronomy.browser.min.js">
     </script>
     <style>
-        /* ===== TÜM STILLER (ÖNCEKİYLE AYNI) ===== */
         * {
             margin: 0;
             padding: 0;
@@ -78,16 +76,9 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, .9), inset 0 0 60px rgba(212, 168, 75, .03);
             pointer-events: auto;
             padding: 2rem 2.5rem;
-            overflow-y: auto;
             display: flex;
             flex-direction: column;
-        }
-        .content-box::-webkit-scrollbar {
-            width: 4px;
-        }
-        .content-box::-webkit-scrollbar-thumb {
-            background: rgba(212, 168, 75, .3);
-            border-radius: 8px;
+            overflow: hidden;
         }
         .tabs {
             display: flex;
@@ -96,7 +87,21 @@
             border-bottom: 1px solid rgba(212, 168, 75, .12);
             padding-bottom: .7rem;
             margin-bottom: 1.5rem;
+            flex-shrink: 0;
         }
+        .scroll-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .scroll-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .scroll-content::-webkit-scrollbar-thumb {
+            background: rgba(212, 168, 75, .3);
+            border-radius: 8px;
+        }
+
         .tab-btn {
             background: transparent;
             border: none;
@@ -135,6 +140,7 @@
         .tab-btn.active .symbol {
             opacity: 1;
         }
+
         .panel {
             display: none;
             animation: fade .4s ease;
@@ -171,6 +177,7 @@
             margin-bottom: 1rem;
             letter-spacing: .5px;
         }
+
         .sky-table {
             width: 100%;
             border-collapse: collapse;
@@ -223,6 +230,7 @@
             color: #b8a48a;
             font-style: italic;
         }
+
         .symbol-sun {
             color: #f5c842;
         }
@@ -253,6 +261,7 @@
         .symbol-lilith {
             color: #a58b9e;
         }
+
         .card-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -285,6 +294,7 @@
         .card .emoji-big {
             font-size: 2rem;
         }
+
         .ritual-steps {
             counter-reset: step;
             list-style: none;
@@ -316,6 +326,7 @@
             border: 1px solid rgba(212, 168, 75, .15);
             font-weight: 700;
         }
+
         #messageDisplay {
             font: 1.7rem/1 'Cinzel Decorative', serif;
             color: #f5eee7;
@@ -335,6 +346,7 @@
             color: #d4c3a8;
             line-height: 1.6;
         }
+
         .click-hint {
             position: fixed;
             bottom: 2rem;
@@ -381,6 +393,7 @@
             font-size: .85rem;
             font-style: italic;
         }
+
         @media (max-width: 640px) {
             .content-box {
                 padding: 1.2rem;
@@ -456,6 +469,7 @@
     <div class="content-overlay">
         <div class="content-box">
 
+            <!-- SEKMELER SABİT -->
             <div class="tabs">
                 <button class="tab-btn active" data-tab="tab1"><span class="symbol">✦</span> Bildirge</button>
                 <button class="tab-btn" data-tab="tab2"><span class="symbol">☉</span> Gökyüzü</button>
@@ -463,36 +477,36 @@
                 <button class="tab-btn" data-tab="tab4"><span class="symbol">🕯</span> Ritüel</button>
             </div>
 
-            <!-- PANEL 1 -->
-            <div class="panel active" id="tab1">
-                <h2><span style="color:#d4a84b;">✦</span> Günün Cadı Bildirgesi</h2>
-                <div class="sub" id="dateDisplay"></div>
-                <div id="messageDisplay">—</div>
-                <div style="display:flex; flex-wrap:wrap; gap:.6rem 1.2rem; margin:1rem 0 .5rem;" id="quickDetails"></div>
-                <div style="margin-top:1.2rem; padding-top:1.2rem; border-top:1px solid rgba(212,168,75,.08);" id="ritualSummary"></div>
-            </div>
+            <!-- KAYAN İÇERİK -->
+            <div class="scroll-content">
 
-            <!-- PANEL 2 -->
-            <div class="panel" id="tab2">
-                <h2><span style="color:#e8d5c0;">☾</span> Gökyüzü Takvimi · Doğuş & Batış</h2>
-                <div class="sub" id="locationDisplay">Konum alınıyor…</div>
-                <div id="skyTableContainer"><div class="loading">Göksel veriler hesaplanıyor…</div></div>
-            </div>
+                <div class="panel active" id="tab1">
+                    <h2><span style="color:#d4a84b;">✦</span> Günün Cadı Bildirgesi</h2>
+                    <div class="sub" id="dateDisplay"></div>
+                    <div id="messageDisplay">—</div>
+                    <div style="display:flex; flex-wrap:wrap; gap:.6rem 1.2rem; margin:1rem 0 .5rem;" id="quickDetails"></div>
+                    <div style="margin-top:1.2rem; padding-top:1.2rem; border-top:1px solid rgba(212,168,75,.08);" id="ritualSummary"></div>
+                </div>
 
-            <!-- PANEL 3 -->
-            <div class="panel" id="tab3">
-                <h2><span style="color:#6aab6a;">🌿</span> Bitki & Kristal Ansiklopedisi</h2>
-                <div class="card-grid" id="herbCrystalGrid"><div class="loading">Yükleniyor…</div></div>
-            </div>
+                <div class="panel" id="tab2">
+                    <h2><span style="color:#e8d5c0;">☾</span> Gökyüzü Takvimi · Doğuş & Batış</h2>
+                    <div class="sub" id="locationDisplay">Konum alınıyor…</div>
+                    <div id="skyTableContainer"><div class="loading">Göksel veriler hesaplanıyor…</div></div>
+                </div>
 
-            <!-- PANEL 4 -->
-            <div class="panel" id="tab4">
-                <h2><span style="color:#d4a84b;">🕯</span> Ritüel Rehberi · Niyet Çalışması</h2>
-                <div id="ritualStepsContainer"><div class="loading">Ritüel hazırlanıyor…</div></div>
-            </div>
+                <div class="panel" id="tab3">
+                    <h2><span style="color:#6aab6a;">🌿</span> Bitki & Kristal Ansiklopedisi</h2>
+                    <div class="card-grid" id="herbCrystalGrid"><div class="loading">Yükleniyor…</div></div>
+                </div>
 
-        </div>
-    </div>
+                <div class="panel" id="tab4">
+                    <h2><span style="color:#d4a84b;">🕯</span> Ritüel Rehberi · Niyet Çalışması</h2>
+                    <div id="ritualStepsContainer"><div class="loading">Ritüel hazırlanıyor…</div></div>
+                </div>
+
+            </div><!-- /scroll-content -->
+        </div><!-- /content-box -->
+    </div><!-- /content-overlay -->
 
     <div class="click-hint">✦ sayfaya dokun / tıkla ✦</div>
 
@@ -620,25 +634,23 @@
         };
 
         // ============================================================
-        // 4. ASTRONOMİ – KESİN ÇÖZÜM (horizon parametresi kaldırıldı)
+        // 4. ASTRONOMİ – DOĞRUDAN ÇALIŞAN PROJEDEN ALINAN KOD
         // ============================================================
         const fmt = d => d && d instanceof Date && !isNaN(d) ? String(d.getHours()).padStart(2, '0') + ':' + String(d
             .getMinutes()).padStart(2, '0') : '—';
 
-        function getRiseSet(body, obs, date) {
+        function getRiseSet(body, observer, date) {
             try {
-                // Günün başlangıcı (00:00)
-                const startOfDay = new Date(date);
-                startOfDay.setHours(0, 0, 0, 0);
+                // Günün başlangıcı
+                const start = new Date(date);
+                start.setHours(0, 0, 0, 0);
 
-                // SADECE 4 PARAMETRE: body, observer, direction, startTime
-                // Horizon (5. parametre) verilmiyor, böylece varsayılan -0.833 kullanılır.
-                const rise = Astronomy.SearchRiseSet(body, obs, Astronomy.Rise, startOfDay);
-                const set = Astronomy.SearchRiseSet(body, obs, Astronomy.Set, startOfDay);
+                // ÇALIŞAN PROJEDEKİ GİBİ: 5. PARAMETRE HORIZON (varsayılan -0.833)
+                // Burada açıkça -0.833 veriyorum.
+                const horizon = -0.833;
 
-                // Hata ayıklama için konsola yazdır
-                console.log(`${body} doğuş:`, rise ? rise.date : 'null');
-                console.log(`${body} batış:`, set ? set.date : 'null');
+                const rise = Astronomy.SearchRiseSet(body, observer, Astronomy.Rise, start, horizon);
+                const set = Astronomy.SearchRiseSet(body, observer, Astronomy.Set, start, horizon);
 
                 return {
                     rise: rise ? rise.date : null,
@@ -704,7 +716,7 @@
         }
 
         // ============================================================
-        // 6. ASENKRON GÖKYÜZÜ (SIRALI) - KESİN ÇÖZÜM
+        // 6. ASENKRON GÖKYÜZÜ (SIRALI)
         // ============================================================
         const BODIES = [
             { id: Astronomy.Body.Sun, name: 'Güneş', symbol: '☉', cls: 'symbol-sun' },
