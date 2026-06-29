@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lilithian · Cadı Bildirgeci</title>
 
-    <!-- DOĞRU: Tarayıcı için özel derlenmiş Astronomy Engine (v2.1.19) -->
-    <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/source/js/astronomy.browser.min.js">
+    <!-- Astronomy Engine v2.1.19 (kesin çalışan CDN) -->
+    <script src="https://unpkg.com/astronomy-engine@2.1.19/dist/astronomy.browser.min.js">
     </script>
 
     <style>
@@ -307,11 +307,32 @@
             padding: 1rem;
             font-weight: bold;
         }
-        .info-msg {
-            color: #f1c40f;
+        .fatal-error {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #0b0a0c;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            color: #f0e6d3;
+            font-family: 'Georgia', serif;
             text-align: center;
-            padding: 0.5rem;
-            font-size: 0.9rem;
+            padding: 2rem;
+        }
+        .fatal-error h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #e74c3c;
+        }
+        .fatal-error p {
+            font-size: 1rem;
+            color: #b8a48a;
+            max-width: 500px;
         }
     </style>
 </head>
@@ -369,6 +390,13 @@
     </div>
 
     <div class="click-hint">✦ sayfaya dokun / tıkla ✦</div>
+
+    <!-- HATA EKRANI (astronomy yüklenmezse gösterilir) -->
+    <div id="fatalError" class="fatal-error" style="display:none;">
+        <h1>⚠️ Kritik Hata</h1>
+        <p>Astronomy kütüphanesi yüklenemedi. Lütfen internet bağlantınızı kontrol edin ve sayfayı yenileyin.</p>
+        <p style="margin-top:1rem; font-size:0.8rem; color:#6a5f53;">Bu sayfa Astronomy Engine olmadan çalışamaz.</p>
+    </div>
 
     <script>
         // ================================================================
@@ -554,14 +582,21 @@
         }
 
         // ================================================================
-        // 6. TÜM PANELLERİ RENDER ET (EKSİKSİZ)
+        // 6. TÜM PANELLERİ RENDER ET (FALLBACK YOK)
         // ================================================================
         let renderDone = false;
 
         function renderAllPanels() {
             if (renderDone) return;
+            if (typeof Astronomy === 'undefined') {
+                // KRİTİK HATA: Astronomy yüklenmedi
+                document.getElementById('fatalError').style.display = 'flex';
+                document.querySelector('.content-overlay').style.display = 'none';
+                document.querySelector('.click-hint').style.display = 'none';
+                console.error('❌ KRİTİK HATA: Astronomy kütüphanesi yüklenemedi.');
+                return;
+            }
 
-            // Konum hazır değilse bekle
             if (!locationReady) {
                 setTimeout(renderAllPanels, 300);
                 return;
@@ -569,7 +604,6 @@
 
             console.log('🚀 Paneller render ediliyor...');
 
-            // ---- STATİK VERİLER (her zaman gösterilir) ----
             const now = new Date();
             const moon = getMoonPhase();
             const zodiac = getZodiac();
@@ -578,7 +612,7 @@
             const dateStr = now.toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric',
                 weekday: 'long' });
 
-            // ---- PANEL 1: BİLDİRGE (her zaman dolu) ----
+            // ---- PANEL 1: BİLDİRGE ----
             document.getElementById('dateDisplay').textContent = dateStr;
             document.getElementById('messageDisplay').textContent = `✦ ${moon} · ${zodiac} ✦`;
             document.getElementById('quickDetails').innerHTML =
@@ -586,17 +620,17 @@
             document.getElementById('ritualSummary').innerHTML =
                 `Bugün ${moon} ve ${zodiac} burcunun etkisiyle, ${herb.name.split('(')[0].trim()} ve ${crystal.name.split('(')[0].trim()} ile niyetini tazele.`;
 
-            // ---- PANEL 3: BİTKİ & KRİSTAL (her zaman dolu) ----
+            // ---- PANEL 3: BİTKİ & KRİSTAL ----
             document.getElementById('herbCrystalGrid').innerHTML = `
                     <div class="card"><h3>🌿 ${herb.name}</h3><div class="sci">${herb.science}</div></div>
                     <div class="card"><h3>💎 ${crystal.name}</h3><div class="sci">${crystal.science}</div></div>
                     <div class="card" style="grid-column:1/-1;background:rgba(255,255,255,0.02);">
                         <h3>🧪 Bilimsel Not</h3>
-                        <div class="sci">Bu bitki ve kristal, geleneksel cadılıkta kullanıldığı gibi, modern bilim de bu bileşenlerin çeşitli biyokimyasal ve fiziksel özelliklerini doğrulamaktadır. Örneğin lavantadaki linalool, sinir sistemi üzerinde yatıştırıcı etki gösterir; kuvars ise piezoelektrik özelliği ile enerji dönüşümünde kullanılır.</div>
+                        <div class="sci">Bu bitki ve kristal, geleneksel cadılıkta kullanıldığı gibi, modern bilim de bu bileşenlerin çeşitli biyokimyasal ve fiziksel özelliklerini doğrulamaktadır.</div>
                     </div>
                 `;
 
-            // ---- PANEL 4: RİTÜEL (her zaman dolu) ----
+            // ---- PANEL 4: RİTÜEL ----
             const ritualSteps = [
                 `Hazırlık: ${herb.name.split('(')[0].trim()} ve ${crystal.name.split('(')[0].trim()}’u önüne koy.`,
                 `Niyet: Bugünün ${moon} enerjisinde, ${zodiac} burcunun rehberliğinde net bir niyet belirle.`,
@@ -611,98 +645,80 @@
                     </div>
                 `;
 
-            // ---- PANEL 2: GÖKYÜZÜ (Astronomy varsa dinamik, yoksa bilgi mesajı) ----
-            document.getElementById('locationDisplay').textContent =
-                `📍 Enlem: ${userLat.toFixed(4)}°, Boylam: ${userLng.toFixed(4)}°`;
+            // ---- PANEL 2: GÖKYÜZÜ (Astronomy kesin yüklü) ----
+            try {
+                const observer = new Astronomy.Observer(userLat, userLng, 0);
+                const bodies = [
+                    { id: Astronomy.Body.Sun, name: '☀️ Güneş' },
+                    { id: Astronomy.Body.Moon, name: '🌙 Ay' },
+                    { id: Astronomy.Body.Mercury, name: '☿ Merkür' },
+                    { id: Astronomy.Body.Venus, name: '♀ Venüs' },
+                    { id: Astronomy.Body.Mars, name: '♂ Mars' },
+                    { id: Astronomy.Body.Jupiter, name: '♃ Jüpiter' },
+                    { id: Astronomy.Body.Saturn, name: '♄ Satürn' },
+                    { id: Astronomy.Body.Uranus, name: '⛢ Uranüs' },
+                    { id: Astronomy.Body.Neptune, name: '♆ Neptün' }
+                ];
 
-            if (typeof Astronomy !== 'undefined') {
-                try {
-                    const observer = new Astronomy.Observer(userLat, userLng, 0);
-                    const bodies = [
-                        { id: Astronomy.Body.Sun, name: '☀️ Güneş' },
-                        { id: Astronomy.Body.Moon, name: '🌙 Ay' },
-                        { id: Astronomy.Body.Mercury, name: '☿ Merkür' },
-                        { id: Astronomy.Body.Venus, name: '♀ Venüs' },
-                        { id: Astronomy.Body.Mars, name: '♂ Mars' },
-                        { id: Astronomy.Body.Jupiter, name: '♃ Jüpiter' },
-                        { id: Astronomy.Body.Saturn, name: '♄ Satürn' },
-                        { id: Astronomy.Body.Uranus, name: '⛢ Uranüs' },
-                        { id: Astronomy.Body.Neptune, name: '♆ Neptün' }
-                    ];
-
-                    let tableRows = '';
-                    bodies.forEach(({ id, name }) => {
-                        try {
-                            const { rise, set } = getBodyRiseSet(id, observer, now);
-                            const riseStr = rise ? formatTime(rise) : '—';
-                            const setStr = set ? formatTime(set) : '—';
-                            let signInfo = '';
-                            if (id !== Astronomy.Body.Sun && id !== Astronomy.Body.Moon) {
-                                const lon = getPlanetEclipticLongitude(id, now);
-                                if (lon !== null) signInfo = ` · ${getSignFromLongitude(lon)}`;
-                            } else if (id === Astronomy.Body.Sun) {
-                                signInfo = ` · ${zodiac}`;
-                            } else if (id === Astronomy.Body.Moon) {
-                                const lon = getPlanetEclipticLongitude(id, now);
-                                if (lon !== null) signInfo = ` · ${getSignFromLongitude(lon)}`;
-                            }
-                            tableRows += `<tr>
-                                    <td class="body-name">${name}</td>
-                                    <td class="time">${riseStr}</td>
-                                    <td class="time">${setStr}</td>
-                                    <td class="info">${signInfo}</td>
-                                </tr>`;
-                        } catch (e) {
-                            tableRows += `<tr><td class="body-name">${name}</td><td colspan="3" class="info">—</td></tr>`;
-                        }
-                    });
-
-                    // Lilith
+                let tableRows = '';
+                bodies.forEach(({ id, name }) => {
                     try {
-                        const lilithLon = getLilithLongitude(now);
-                        if (lilithLon !== null) {
-                            const lilithSign = getSignFromLongitude(lilithLon);
-                            tableRows += `<tr>
-                                    <td class="body-name">🜁 Lilith (Black Moon)</td>
-                                    <td class="time">—</td>
-                                    <td class="time">—</td>
-                                    <td class="info">${lilithSign} (≈${lilithLon.toFixed(1)}°)</td>
-                                </tr>`;
-                        } else {
-                            tableRows += `<tr><td class="body-name">🜁 Lilith</td><td colspan="3" class="info">—</td></tr>`;
+                        const { rise, set } = getBodyRiseSet(id, observer, now);
+                        const riseStr = rise ? formatTime(rise) : '—';
+                        const setStr = set ? formatTime(set) : '—';
+                        let signInfo = '';
+                        if (id !== Astronomy.Body.Sun && id !== Astronomy.Body.Moon) {
+                            const lon = getPlanetEclipticLongitude(id, now);
+                            if (lon !== null) signInfo = ` · ${getSignFromLongitude(lon)}`;
+                        } else if (id === Astronomy.Body.Sun) {
+                            signInfo = ` · ${zodiac}`;
+                        } else if (id === Astronomy.Body.Moon) {
+                            const lon = getPlanetEclipticLongitude(id, now);
+                            if (lon !== null) signInfo = ` · ${getSignFromLongitude(lon)}`;
                         }
+                        tableRows += `<tr>
+                                <td class="body-name">${name}</td>
+                                <td class="time">${riseStr}</td>
+                                <td class="time">${setStr}</td>
+                                <td class="info">${signInfo}</td>
+                            </tr>`;
                     } catch (e) {
+                        tableRows += `<tr><td class="body-name">${name}</td><td colspan="3" class="info">—</td></tr>`;
+                    }
+                });
+
+                // Lilith
+                try {
+                    const lilithLon = getLilithLongitude(now);
+                    if (lilithLon !== null) {
+                        const lilithSign = getSignFromLongitude(lilithLon);
+                        tableRows += `<tr>
+                                <td class="body-name">🜁 Lilith (Black Moon)</td>
+                                <td class="time">—</td>
+                                <td class="time">—</td>
+                                <td class="info">${lilithSign} (≈${lilithLon.toFixed(1)}°)</td>
+                            </tr>`;
+                    } else {
                         tableRows += `<tr><td class="body-name">🜁 Lilith</td><td colspan="3" class="info">—</td></tr>`;
                     }
-
-                    document.getElementById('skyTableContainer').innerHTML = `
-                            <table class="sky-table">
-                                <thead><tr><th>Gök Cismi</th><th>Doğuş</th><th>Batış</th><th>Burç / Not</th></tr></thead>
-                                <tbody>${tableRows}</tbody>
-                            </table>
-                            <div style="margin-top:0.8rem;font-size:0.7rem;color:#6a5f53;text-align:right;">
-                                * Yaklaşık değerler, ±2 dakika hata olabilir.
-                            </div>
-                        `;
                 } catch (e) {
-                    document.getElementById('skyTableContainer').innerHTML =
-                        `<div class="error-msg">⚠️ Gökyüzü verileri hesaplanırken hata oluştu: ${e.message}</div>`;
+                    tableRows += `<tr><td class="body-name">🜁 Lilith</td><td colspan="3" class="info">—</td></tr>`;
                 }
-            } else {
-                // Astronomy yüklenmemiş
+
+                document.getElementById('locationDisplay').textContent =
+                    `📍 Enlem: ${userLat.toFixed(4)}°, Boylam: ${userLng.toFixed(4)}°`;
                 document.getElementById('skyTableContainer').innerHTML = `
-                        <div class="info-msg">⏳ Astronomi kütüphanesi yükleniyor. Gökyüzü verileri yakında gelecek.</div>
-                        <div style="margin-top:0.8rem;font-size:0.7rem;color:#6a5f53;text-align:center;">
-                            Lütfen sayfayı yenileyin veya internet bağlantınızı kontrol edin.
+                        <table class="sky-table">
+                            <thead><tr><th>Gök Cismi</th><th>Doğuş</th><th>Batış</th><th>Burç / Not</th></tr></thead>
+                            <tbody>${tableRows}</tbody>
+                        </table>
+                        <div style="margin-top:0.8rem;font-size:0.7rem;color:#6a5f53;text-align:right;">
+                            * Yaklaşık değerler, ±2 dakika hata olabilir.
                         </div>
                     `;
-                // Kütüphane yüklenmesini bekle
-                setTimeout(() => {
-                    if (typeof Astronomy !== 'undefined') {
-                        console.log('✅ Astronomy geç yüklendi, yeniden render ediliyor...');
-                        renderAllPanels();
-                    }
-                }, 2000);
+            } catch (e) {
+                document.getElementById('skyTableContainer').innerHTML =
+                    `<div class="error-msg">⚠️ Gökyüzü verileri hesaplanırken hata oluştu: ${e.message}</div>`;
             }
 
             renderDone = true;
@@ -715,34 +731,29 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Lilithian başlatılıyor...');
 
-            // Konumu al
+            // Astronomy'nin yüklenip yüklenmediğini kontrol et
+            if (typeof Astronomy === 'undefined') {
+                // 5 saniye bekle, hala yüklenmediyse fatal error
+                setTimeout(function() {
+                    if (typeof Astronomy === 'undefined') {
+                        document.getElementById('fatalError').style.display = 'flex';
+                        document.querySelector('.content-overlay').style.display = 'none';
+                        document.querySelector('.click-hint').style.display = 'none';
+                        console.error('❌ KRİTİK HATA: Astronomy kütüphanesi yüklenemedi.');
+                    }
+                }, 5000);
+            }
+
             getLocation();
 
-            // Astronomy zaten yüklüyse hemen dene, değilse bekle
+            // Astronomy zaten yüklüyse hemen render et
             if (typeof Astronomy !== 'undefined') {
-                console.log('✅ Astronomy zaten yüklü.');
                 if (locationReady) renderAllPanels();
-            } else {
-                console.log('⏳ Astronomy yüklenmesi bekleniyor...');
-                // Kütüphane yüklenene kadar bekle (en fazla 10 saniye)
-                let checkCount = 0;
-                const checkInterval = setInterval(() => {
-                    checkCount++;
-                    if (typeof Astronomy !== 'undefined') {
-                        clearInterval(checkInterval);
-                        console.log('✅ Astronomy yüklendi!');
-                        if (locationReady) renderAllPanels();
-                    } else if (checkCount > 20) {
-                        clearInterval(checkInterval);
-                        console.warn('⚠️ Astronomy yüklenemedi, statik içerikler gösteriliyor.');
-                        if (locationReady) renderAllPanels();
-                    }
-                }, 500);
             }
         });
 
         // ================================================================
-        // 8. HATA YAKALAMA (Global)
+        // 8. HATA YAKALAMA
         // ================================================================
         window.onerror = function(msg, url, line, col, error) {
             console.error('❌ Global hata yakalandı:', msg, error);
