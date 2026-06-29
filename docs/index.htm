@@ -1,668 +1,1177 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-  <title>LILITH · CADI BİLDİRGECİ</title>
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&display=swap" rel="stylesheet">
-  <!-- Astronomy Engine (browser) -->
-  <script src="https://unpkg.com/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      background: #0b0a0c;
-      color: #f0e6d3;
-      font-family: 'Cinzel', serif;
-      overflow: hidden;
-      height: 100vh;
-      width: 100vw;
-      position: relative;
-      user-select: none;
-    }
-    /* video arka plan */
-    #video-background {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      pointer-events: none;
-    }
-    #video-background iframe {
-      width: 100%;
-      height: 100%;
-      aspect-ratio: 9 / 16;
-      border: none;
-      pointer-events: none;
-    }
-    /* blur katmanı */
-    .overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      backdrop-filter: blur(12px) brightness(0.5);
-      background: rgba(11, 10, 12, 0.45);
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    /* sabit sekme butonları */
-    .tabs {
-      display: flex;
-      flex-shrink: 0;
-      justify-content: center;
-      gap: 0.5rem;
-      padding: 1rem 1rem 0.4rem;
-      background: transparent;
-      flex-wrap: wrap;
-      border-bottom: 1px solid rgba(212, 168, 75, 0.2);
-    }
-    .tab-btn {
-      background: rgba(11, 10, 12, 0.5);
-      border: 1px solid rgba(212, 168, 75, 0.2);
-      color: #f0e6d3;
-      font-family: 'Cinzel Decorative', cursive;
-      font-size: 0.9rem;
-      padding: 0.6rem 1.2rem;
-      border-radius: 40px;
-      cursor: pointer;
-      transition: all 0.25s ease;
-      backdrop-filter: blur(2px);
-      letter-spacing: 0.06em;
-      flex-shrink: 0;
-      font-weight: 600;
-    }
-    .tab-btn:hover {
-      background: rgba(212, 168, 75, 0.15);
-      border-color: #d4a84b;
-      box-shadow: 0 0 12px rgba(212, 168, 75, 0.3);
-    }
-    .tab-btn.active {
-      background: rgba(212, 168, 75, 0.2);
-      border-color: #d4a84b;
-      color: #d4a84b;
-      box-shadow: 0 0 16px rgba(212, 168, 75, 0.2);
-    }
-    /* kayabilen içerik */
-    .content-wrapper {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1.2rem 1.5rem 2rem;
-      scroll-behavior: smooth;
-      -webkit-overflow-scrolling: touch;
-    }
-    .panel {
-      display: none;
-      animation: fade 0.3s ease;
-    }
-    .panel.active {
-      display: block;
-    }
-    @keyframes fade {
-      0% { opacity: 0.3; transform: translateY(4px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-    /* kart / cam */
-    .card {
-      background: rgba(11, 10, 12, 0.5);
-      backdrop-filter: blur(4px);
-      border: 1px solid rgba(212, 168, 75, 0.15);
-      border-radius: 24px;
-      padding: 1.2rem 1.4rem;
-      margin-bottom: 1.4rem;
-      transition: border 0.2s;
-    }
-    .card:hover {
-      border-color: rgba(212, 168, 75, 0.4);
-    }
-    .card-title {
-      font-family: 'Cinzel Decorative', cursive;
-      color: #d4a84b;
-      font-size: 1.2rem;
-      letter-spacing: 0.04em;
-      border-bottom: 1px solid rgba(212, 168, 75, 0.15);
-      padding-bottom: 0.4rem;
-      margin-bottom: 0.8rem;
-    }
-    .date-badge {
-      font-size: 1.1rem;
-      background: rgba(212, 168, 75, 0.1);
-      border-radius: 30px;
-      padding: 0.3rem 1.2rem;
-      display: inline-block;
-      margin-bottom: 0.8rem;
-      border-left: 3px solid #d4a84b;
-    }
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
-    .stat {
-      font-size: 0.95rem;
-      line-height: 1.6;
-    }
-    .stat strong {
-      color: #d4a84b;
-      font-weight: 600;
-    }
-    .symbol {
-      font-size: 1.4rem;
-      margin-right: 6px;
-      display: inline-block;
-    }
-    /* tablo */
-    .celestial-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9rem;
-    }
-    .celestial-table th {
-      text-align: left;
-      padding: 0.5rem 0.2rem;
-      color: #d4a84b;
-      font-weight: 600;
-      border-bottom: 1px solid rgba(212, 168, 75, 0.2);
-      font-size: 0.8rem;
-      letter-spacing: 0.06em;
-    }
-    .celestial-table td {
-      padding: 0.6rem 0.2rem;
-      border-bottom: 1px solid rgba(212, 168, 75, 0.06);
-    }
-    .celestial-table tr:last-child td {
-      border-bottom: none;
-    }
-    .celestial-table .loading-row td {
-      color: #b8a68b;
-      font-style: italic;
-      text-align: center;
-      padding: 1.2rem 0;
-    }
-    .planet-symbol {
-      font-size: 1.4rem;
-      display: inline-block;
-      width: 2rem;
-      text-align: center;
-    }
-    .sun { color: #f5c542; }
-    .moon { color: #c0cbd6; }
-    .mercury { color: #b8b09b; }
-    .venus { color: #e6a8b0; }
-    .mars { color: #c54b3c; }
-    .jupiter { color: #d9b48f; }
-    .saturn { color: #c2b29a; }
-    .uranus { color: #8fbcb3; }
-    .neptune { color: #4b7b9e; }
-    .lilith { color: #b57d9e; }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <title>LILITHIAN · Cadı Bildirgeci</title>
 
-    .rituel-step {
-      display: flex;
-      gap: 0.8rem;
-      align-items: flex-start;
-      margin: 0.8rem 0;
-      border-left: 2px solid rgba(212, 168, 75, 0.2);
-      padding-left: 1rem;
-    }
-    .step-num {
-      font-family: 'Cinzel Decorative', cursive;
-      color: #d4a84b;
-      font-size: 0.9rem;
-      min-width: 1.8rem;
-    }
-    .footnote {
-      font-size: 0.8rem;
-      opacity: 0.7;
-      margin-top: 0.8rem;
-      border-top: 1px solid rgba(212, 168, 75, 0.1);
-      padding-top: 0.8rem;
-    }
-    /* mobil */
-    @media (max-width: 640px) {
-      .tabs { gap: 0.3rem; padding: 0.7rem 0.4rem; }
-      .tab-btn { font-size: 0.65rem; padding: 0.4rem 0.8rem; }
-      .content-wrapper { padding: 0.8rem 0.8rem 1.5rem; }
-      .card { padding: 0.9rem 0.9rem; }
-      .grid-2 { grid-template-columns: 1fr; gap: 0.5rem; }
-      .celestial-table { font-size: 0.7rem; }
-      .celestial-table th, .celestial-table td { padding: 0.3rem 0.1rem; }
-      .planet-symbol { font-size: 1rem; width: 1.4rem; }
-      .card-title { font-size: 1rem; }
-    }
-    /* kaydırma çubuğu */
-    .content-wrapper::-webkit-scrollbar { width: 4px; }
-    .content-wrapper::-webkit-scrollbar-track { background: rgba(11, 10, 12, 0.3); }
-    .content-wrapper::-webkit-scrollbar-thumb { background: #d4a84b; border-radius: 10px; }
-  </style>
-</head>
-<body>
-  <!-- Video arka plan -->
-  <div id="video-background">
-    <iframe src="https://www.youtube.com/embed/JIgOlsfKtYw?autoplay=0&loop=1&controls=0&playlist=JIgOlsfKtYw&mute=0&rel=0&modestbranding=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-  </div>
+    <!-- GOOGLE FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700;900&display=swap" rel="stylesheet" />
 
-  <!-- Katman -->
-  <div class="overlay" id="app">
-    <div class="tabs" id="tabHeaders">
-      <button class="tab-btn active" data-tab="bildirge">Bildirge</button>
-      <button class="tab-btn" data-tab="gokyuzu">Gökyüzü</button>
-      <button class="tab-btn" data-tab="bitki">Bitki & Kristal</button>
-      <button class="tab-btn" data-tab="rituel">Ritüel</button>
-    </div>
-    <div class="content-wrapper" id="contentWrapper">
-      <!-- BİLDİRGE -->
-      <div class="panel active" id="panel-bildirge">
-        <div class="card">
-          <div class="date-badge" id="dateDisplay">⏳ Yükleniyor...</div>
-          <div id="moonPhaseDisplay" class="stat"><strong>🌙 Ay evresi:</strong> hesaplanıyor</div>
-          <div id="sunSignDisplay" class="stat"><strong>☉ Güneş burcu:</strong> hesaplanıyor</div>
-          <div id="plantOfDay" class="stat"><strong>🌿 Bitki:</strong> —</div>
-          <div id="crystalOfDay" class="stat"><strong>💎 Kristal:</strong> —</div>
-          <div id="ritualSummary" class="stat" style="margin-top:0.6rem;"><strong>🕯️ Ritüel özeti:</strong> —</div>
-        </div>
-      </div>
-      <!-- GÖKYÜZÜ -->
-      <div class="panel" id="panel-gokyuzu">
-        <div class="card">
-          <div class="card-title">⛧ GÖK CİSİMLERİ</div>
-          <div style="font-size:0.8rem; opacity:0.6; margin-bottom:0.6rem;" id="observerInfo">📍 İstanbul (varsayılan)</div>
-          <table class="celestial-table" id="celestialTable">
-            <thead><tr><th>Cisim</th><th>Doğuş</th><th>Batış</th><th>Burç</th></tr></thead>
-            <tbody id="tableBody">
-              <tr class="loading-row"><td colspan="4">⏳ Hesaplanıyor…</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <!-- BİTKİ & KRİSTAL -->
-      <div class="panel" id="panel-bitki">
-        <div class="card">
-          <div class="card-title">🌿 GÜNÜN BİTKİSİ</div>
-          <div id="plantDetail" class="stat"><strong>—</strong></div>
-          <div style="margin-top:0.6rem; font-size:0.9rem;" id="plantNote">Geleneksel cadılıkta kullanımı: —</div>
-        </div>
-        <div class="card">
-          <div class="card-title">💎 GÜNÜN KRİSTALİ</div>
-          <div id="crystalDetail" class="stat"><strong>—</strong></div>
-          <div style="margin-top:0.6rem; font-size:0.9rem;" id="crystalNote">Geleneksel cadılıkta kullanımı: —</div>
-        </div>
-      </div>
-      <!-- RİTÜEL -->
-      <div class="panel" id="panel-rituel">
-        <div class="card">
-          <div class="card-title">🜁 RİTÜEL REHBERİ</div>
-          <div id="rituelSteps"></div>
-          <div class="footnote">Kaynak: Geleneksel cadılık ve modern farkındalık pratikleri.</div>
-        </div>
-      </div>
-    </div>
-  </div>
+    <!-- ASTRONOMY ENGINE (BROWSER) -->
+    <script src="https://unpkg.com/astronomy-engine@2.1.19/astronomy.browser.min.js">
+    </script>
 
-  <script>
-    (function() {
-      "use strict";
-
-      // ----- yardımcılar -----
-      const $ = id => document.getElementById(id);
-      const qs = (sel, ctx) => (ctx || document).querySelector(sel);
-
-      // seed sabit (gün bazlı)
-      function dailySeed() {
-        const d = new Date();
-        return d.getFullYear() * 10000 + (d.getMonth()+1)*100 + d.getDate();
-      }
-      function seededRandom(seed) {
-        let s = seed;
-        return function() {
-          s = (s * 9301 + 49297) % 233280;
-          return s / 233280;
-        };
-      }
-
-      // burç listesi
-      const SIGNS = ['Koç', 'Boğa', 'İkizler', 'Yengeç', 'Aslan', 'Başak', 'Terazi', 'Akrep', 'Yay', 'Oğlak', 'Kova', 'Balık'];
-      function getSignFromLongitude(deg) {
-        let d = deg % 360;
-        if (d < 0) d += 360;
-        const idx = Math.floor(d / 30) % 12;
-        return SIGNS[idx];
-      }
-
-      // bitki / kristal verileri
-      const PLANT_LIST = [
-        { name: 'Artemisia absinthium (Pelin)', desc: 'Koruyucu, rüya çalışmaları', note: 'Ay ve sezgi ile bağlantılı.' },
-        { name: 'Salvia officinalis (Adaçayı)', desc: 'Arındırıcı, bilgelik', note: 'Ritüel temizlikte kullanılır.' },
-        { name: 'Rosa damascena (Gül)', desc: 'Aşk, kalp açma', note: 'Aşk büyülerinde ve kendini sevmede.' },
-        { name: 'Lavandula angustifolia (Lavanta)', desc: 'Sakinleştirici, koruyucu', note: 'Huzur ve uyku ritüelleri.' },
-        { name: 'Thymus vulgaris (Kekik)', desc: 'Cesaret, enerji', note: 'Eski Mısır\'da mumyalama ritüelleri.' },
-        { name: 'Juniperus communis (Ardıç)', desc: 'Koruyucu, arındırıcı', note: 'Negatif enerjiyi uzaklaştırır.' }
-      ];
-      const CRYSTAL_LIST = [
-        { name: 'Kuvars (Kaya Kristali)', desc: 'Enerji yükseltici, şifa', note: 'Her türlü ritüelde kullanılır.' },
-        { name: 'Ametist', desc: 'Sezgi, ruhsal farkındalık', note: 'Meditasyon ve koruma.' },
-        { name: 'Gül Kuvars', desc: 'Sevgi, duygusal iyileşme', note: 'Aşk ve bağışlama ritüelleri.' },
-        { name: 'Obsidyen', desc: 'Koruma, topraklama', note: 'Eski ritüellerde ayna olarak.' },
-        { name: 'Yeşim', desc: 'Bolluk, uyum', note: 'Şans ve bereket için.' },
-        { name: 'Lapis Lazuli', desc: 'Bilgelik, iletişim', note: 'Kutsal kitaplarda ve ritüellerde.' }
-      ];
-
-      // ----- durum -----
-      let currentTab = 'bildirge';
-      let observer = { latitude: 41.0082, longitude: 28.9784 };
-      let observerReady = false;
-      let libLoaded = false;
-      let isComputing = false;
-
-      // ----- DOM referansları -----
-      const tabBtns = document.querySelectorAll('.tab-btn');
-      const panels = {
-        bildirge: $('panel-bildirge'),
-        gokyuzu: $('panel-gokyuzu'),
-        bitki: $('panel-bitki'),
-        rituel: $('panel-rituel')
-      };
-      const tableBody = $('tableBody');
-      const dateDisplay = $('dateDisplay');
-      const moonPhaseDisplay = $('moonPhaseDisplay');
-      const sunSignDisplay = $('sunSignDisplay');
-      const plantOfDay = $('plantOfDay');
-      const crystalOfDay = $('crystalOfDay');
-      const ritualSummary = $('ritualSummary');
-      const plantDetail = $('plantDetail');
-      const crystalDetail = $('crystalDetail');
-      const plantNote = $('plantNote');
-      const crystalNote = $('crystalNote');
-      const rituelSteps = $('rituelSteps');
-      const observerInfo = $('observerInfo');
-
-      // ----- sekmeler -----
-      tabBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-          const tab = this.dataset.tab;
-          tabBtns.forEach(b => b.classList.remove('active'));
-          this.classList.add('active');
-          Object.keys(panels).forEach(k => panels[k].classList.remove('active'));
-          panels[tab].classList.add('active');
-          currentTab = tab;
-        });
-      });
-
-      // ----- video başlatma (tıklama / dokunma) -----
-      function startVideo() {
-        const iframe = document.querySelector('#video-background iframe');
-        if (iframe) {
-          const src = iframe.src;
-          if (!src.includes('autoplay=1')) {
-            iframe.src = src.replace('autoplay=0', 'autoplay=1');
-          }
+    <style>
+        /* ============================================================
+           RESET & TEMEL
+           ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-      }
-      document.addEventListener('click', startVideo, { once: true });
-      document.addEventListener('touchstart', startVideo, { once: true });
-      // context menu engeli + kan damlası
-      document.addEventListener('contextmenu', e => e.preventDefault());
-      document.addEventListener('click', dropBlood);
-      document.addEventListener('touchstart', dropBlood);
 
-      function dropBlood(e) {
-        const emoji = document.createElement('div');
-        emoji.textContent = '🩸';
-        emoji.style.position = 'fixed';
-        emoji.style.top = '-10px';
-        emoji.style.left = '50%';
-        emoji.style.fontSize = (24 + Math.random() * 20) + 'px';
-        emoji.style.zIndex = '9999';
-        emoji.style.pointerEvents = 'none';
-        emoji.style.opacity = '0.9';
-        emoji.style.transform = 'rotate(0deg)';
-        const xOffset = (Math.random() - 0.5) * 200;
-        emoji.style.transform = `translateX(${xOffset}px) rotate(0deg)`;
-        document.body.appendChild(emoji);
-
-        let y = -10;
-        let rot = 0;
-        let opacity = 0.95;
-        const interval = setInterval(() => {
-          y += 3 + Math.random() * 4;
-          rot += (Math.random() - 0.5) * 8;
-          opacity -= 0.012;
-          emoji.style.top = y + 'px';
-          emoji.style.transform = `translateX(${xOffset + Math.sin(y/20)*8}px) rotate(${rot}deg)`;
-          emoji.style.opacity = Math.max(0, opacity);
-          if (y > window.innerHeight + 30 || opacity <= 0) {
-            clearInterval(interval);
-            emoji.remove();
-          }
-        }, 30);
-      }
-
-      // ----- Astronomy Engine yükleme kontrolü -----
-      function checkLib() {
-        if (typeof Astronomy !== 'undefined') {
-          libLoaded = true;
-          return true;
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Cinzel', 'Georgia', serif;
+            background: #0b0a0c;
+            color: #f0e6d3;
+            user-select: none;
         }
-        return false;
-      }
 
-      // ----- konum -----
-      function getLocation() {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            pos => {
-              observer.latitude = pos.coords.latitude;
-              observer.longitude = pos.coords.longitude;
-              observerReady = true;
-              observerInfo.textContent = `📍 ${observer.latitude.toFixed(4)}, ${observer.longitude.toFixed(4)} (GPS)`;
-              if (libLoaded && !isComputing) startComputations();
-            },
-            err => {
-              console.warn('Konum alınamadı, İstanbul varsayılan.', err);
-              observerReady = true;
-              observerInfo.textContent = '📍 İstanbul (varsayılan)';
-              if (libLoaded && !isComputing) startComputations();
-            },
-            { enableHighAccuracy: false, timeout: 5000 }
-          );
-        } else {
-          observerReady = true;
-          observerInfo.textContent = '📍 İstanbul (varsayılan)';
-          if (libLoaded && !isComputing) startComputations();
+        /* ============================================================
+           VİDEO ARKA PLAN (9:16)
+           ============================================================ */
+        #video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            background: #0b0a0c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            pointer-events: none;
         }
-      }
 
-      // ----- statik içerik (bildirge, bitki, kristal, ritüel) -----
-      function generateStaticContent() {
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
-        dateDisplay.textContent = '📅 ' + dateStr;
+        #video-background iframe {
+            height: 100vh;
+            width: calc(100vh * 9 / 16);
+            min-width: 100vw;
+            min-height: calc(100vw * 16 / 9);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: none;
+            pointer-events: none;
+        }
 
-        // gün seed
-        const seed = dailySeed();
-        const rng = seededRandom(seed);
-        const plantIdx = Math.floor(rng() * PLANT_LIST.length);
-        const crystalIdx = Math.floor(rng() * CRYSTAL_LIST.length);
-        const plant = PLANT_LIST[plantIdx];
-        const crystal = CRYSTAL_LIST[crystalIdx];
+        /* ============================================================
+           İÇERİK KATMANI (BLUR + OVERLAY)
+           ============================================================ */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            backdrop-filter: blur(12px) brightness(0.5);
+            background: rgba(11, 10, 12, 0.50);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-        plantOfDay.innerHTML = `<strong>🌿 Bitki:</strong> ${plant.name} — ${plant.desc}`;
-        crystalOfDay.innerHTML = `<strong>💎 Kristal:</strong> ${crystal.name} — ${crystal.desc}`;
+        /* ============================================================
+           SEKMELER (SABİT)
+           ============================================================ */
+        .tabs {
+            display: flex;
+            flex-shrink: 0;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 1rem 0.6rem;
+            background: transparent;
+            flex-wrap: wrap;
+            border-bottom: 1px solid rgba(212, 168, 75, 0.15);
+        }
 
-        plantDetail.innerHTML = `<strong>${plant.name}</strong> — ${plant.desc}`;
-        plantNote.textContent = 'Geleneksel cadılıkta kullanımı: ' + plant.note;
-        crystalDetail.innerHTML = `<strong>${crystal.name}</strong> — ${crystal.desc}`;
-        crystalNote.textContent = 'Geleneksel cadılıkta kullanımı: ' + crystal.note;
+        .tab-btn {
+            background: rgba(11, 10, 12, 0.6);
+            border: 1px solid rgba(212, 168, 75, 0.15);
+            color: #b8a48a;
+            font-family: 'Cinzel Decorative', cursive;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.6rem 1.2rem;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+            letter-spacing: 0.06em;
+            flex-shrink: 0;
+            text-transform: uppercase;
+        }
 
-        // ritüel (5 adım)
-        const steps = [
-          { label: 'Hazırlık', detail: `${plant.name} ile alanı temizle, ${crystal.name} ile niyetini güçlendir.` },
-          { label: 'Niyet', detail: 'Ay evresi ve burç enerjisiyle niyetini netleştir.' },
-          { label: 'Odaklanma', detail: `${crystal.name} üzerinde odaklan, nefes al.` },
-          { label: 'Fısıldama', detail: `Niyetini fısılda, ${plant.name} enerjisini çağır.` },
-          { label: 'Kapatma', detail: 'Teşekkür et, alanı kapat.' }
-        ];
-        rituelSteps.innerHTML = steps.map((s, i) => `
-          <div class="rituel-step">
-            <span class="step-num">${String(i+1).padStart(2,'0')}</span>
-            <div><strong>${s.label}</strong><br>${s.detail}</div>
-          </div>
-        `).join('');
+        .tab-btn:hover {
+            background: rgba(212, 168, 75, 0.12);
+            border-color: #d4a84b;
+            color: #f0e6d3;
+            box-shadow: 0 0 20px rgba(212, 168, 75, 0.15);
+        }
 
-        // özet
-        ritualSummary.textContent = `Bugün ${plant.name} ve ${crystal.name} ile ay enerjisinde niyet çalışması.`;
-      }
+        .tab-btn.active {
+            background: rgba(212, 168, 75, 0.15);
+            border-color: #d4a84b;
+            color: #d4a84b;
+            box-shadow: 0 0 25px rgba(212, 168, 75, 0.10);
+        }
 
-      // ----- gökyüzü hesaplamaları (sıralı) -----
-      const CELESTIAL_BODIES = [
-        { id: 'Sun', symbol: '☉', label: 'Güneş', cls: 'sun' },
-        { id: 'Moon', symbol: '☽', label: 'Ay', cls: 'moon' },
-        { id: 'Mercury', symbol: '☿', label: 'Merkür', cls: 'mercury' },
-        { id: 'Venus', symbol: '♀', label: 'Venüs', cls: 'venus' },
-        { id: 'Mars', symbol: '♂', label: 'Mars', cls: 'mars' },
-        { id: 'Jupiter', symbol: '♃', label: 'Jüpiter', cls: 'jupiter' },
-        { id: 'Saturn', symbol: '♄', label: 'Satürn', cls: 'saturn' },
-        { id: 'Uranus', symbol: '♅', label: 'Uranüs', cls: 'uranus' },
-        { id: 'Neptune', symbol: '♆', label: 'Neptün', cls: 'neptune' },
-        { id: 'Lilith', symbol: '⚸', label: 'Lilith', cls: 'lilith' }
-      ];
+        .tab-btn .symbol {
+            font-size: 1.1rem;
+            margin-right: 0.4rem;
+        }
 
-      function startComputations() {
-        if (isComputing) return;
-        isComputing = true;
-        // tabloyu temizle, loading satırı
-        tableBody.innerHTML = `<tr class="loading-row"><td colspan="4">⏳ Hesaplanıyor…</td></tr>`;
+        /* ============================================================
+           KAYAN İÇERİK ALANI
+           ============================================================ */
+        .content-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.2rem 1.5rem 2rem;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
 
-        let idx = 0;
-        const date = new Date();
-        const observerObj = new Astronomy.Observer(observer.latitude, observer.longitude, 0);
+        .content-wrapper::-webkit-scrollbar {
+            width: 4px;
+        }
+        .content-wrapper::-webkit-scrollbar-track {
+            background: rgba(11, 10, 12, 0.3);
+        }
+        .content-wrapper::-webkit-scrollbar-thumb {
+            background: #d4a84b;
+            border-radius: 10px;
+        }
 
-        function computeNext() {
-          if (idx >= CELESTIAL_BODIES.length) {
-            isComputing = false;
-            return;
-          }
-          const bodyDef = CELESTIAL_BODIES[idx];
-          const bodyId = bodyDef.id;
-          const row = document.createElement('tr');
+        /* ============================================================
+           PANELLER
+           ============================================================ */
+        .panel {
+            display: none;
+            animation: fadePanel 0.4s ease;
+        }
 
-          try {
-            let rise, set, sign;
-            let body;
+        .panel.active {
+            display: block;
+        }
 
-            if (bodyId === 'Lilith') {
-              // Lilith özel
-              const jd = Astronomy.JulianDay(date);
-              const t = (jd - 2451545.0) / 36525;
-              const lon = 83.3532430 + 0.1114040 * t * 36525;
-              sign = getSignFromLongitude(lon);
-              // SearchRiseSet için dummy body? Lilith için yaklaşık doğuş/batış hesaplanmaz, "—" göster.
-              rise = '—';
-              set = '—';
-            } else {
-              // Astronomy.Body
-              body = new Astronomy.Body(bodyId);
-              // Doğuş
-              const riseResult = Astronomy.SearchRiseSet(body, observerObj, Astronomy.Direction.Rise, date, 300);
-              const setResult = Astronomy.SearchRiseSet(body, observerObj, Astronomy.Direction.Set, date, 300);
-              if (riseResult && riseResult instanceof Date) {
-                rise = riseResult.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-              } else { rise = '—'; }
-              if (setResult && setResult instanceof Date) {
-                set = setResult.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-              } else { set = '—'; }
+        @keyframes fadePanel {
+            0% {
+                opacity: 0.3;
+                transform: translateY(6px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
-              // burç
-              try {
-                const eq = Astronomy.Equator(body, date, false);
-                const ecl = Astronomy.EquatorToEcliptic(eq);
-                sign = getSignFromLongitude(ecl.lon * 180 / Math.PI);
-              } catch(e) { sign = '—'; }
+        /* ============================================================
+           KARTLAR (CAM EFECT)
+           ============================================================ */
+        .card {
+            background: rgba(11, 10, 12, 0.55);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(212, 168, 75, 0.10);
+            border-radius: 24px;
+            padding: 1.4rem 1.6rem;
+            margin-bottom: 1.4rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(212, 168, 75, 0.25);
+        }
+
+        .card-title {
+            font-family: 'Cinzel Decorative', cursive;
+            color: #d4a84b;
+            font-size: 1.1rem;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid rgba(212, 168, 75, 0.10);
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        /* ============================================================
+           BİLDİRGE
+           ============================================================ */
+        .date-badge {
+            font-size: 1.05rem;
+            background: rgba(212, 168, 75, 0.08);
+            border-radius: 30px;
+            padding: 0.3rem 1.2rem;
+            display: inline-block;
+            margin-bottom: 0.8rem;
+            border-left: 3px solid #d4a84b;
+        }
+
+        .stat {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            padding: 0.15rem 0;
+        }
+
+        .stat strong {
+            color: #d4a84b;
+            font-weight: 600;
+        }
+
+        .stat .symbol {
+            font-size: 1.3rem;
+            display: inline-block;
+            margin-right: 4px;
+        }
+
+        /* ============================================================
+           GÖKYÜZÜ TABLOSU
+           ============================================================ */
+        .celestial-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .celestial-table th {
+            text-align: left;
+            padding: 0.6rem 0.3rem;
+            color: #d4a84b;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(212, 168, 75, 0.15);
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .celestial-table td {
+            padding: 0.6rem 0.3rem;
+            border-bottom: 1px solid rgba(212, 168, 75, 0.05);
+            vertical-align: middle;
+        }
+
+        .celestial-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .celestial-table .loading-row td {
+            color: #b8a48a;
+            font-style: italic;
+            text-align: center;
+            padding: 1.5rem 0;
+        }
+
+        .planet-symbol {
+            font-size: 1.4rem;
+            display: inline-block;
+            width: 2rem;
+            text-align: center;
+        }
+
+        /* Gezegen Renkleri */
+        .sun {
+            color: #f5c842;
+        }
+        .moon {
+            color: #c0cbd6;
+        }
+        .mercury {
+            color: #b8b09b;
+        }
+        .venus {
+            color: #e6a8b0;
+        }
+        .mars {
+            color: #c54b3c;
+        }
+        .jupiter {
+            color: #d9b48f;
+        }
+        .saturn {
+            color: #c2b29a;
+        }
+        .uranus {
+            color: #8fbcb3;
+        }
+        .neptune {
+            color: #4b7b9e;
+        }
+        .lilith {
+            color: #b57d9e;
+        }
+
+        /* ============================================================
+           RİTÜEL
+           ============================================================ */
+        .rituel-step {
+            display: flex;
+            gap: 0.8rem;
+            align-items: flex-start;
+            margin: 0.7rem 0;
+            border-left: 2px solid rgba(212, 168, 75, 0.15);
+            padding-left: 1rem;
+        }
+
+        .step-num {
+            font-family: 'Cinzel Decorative', cursive;
+            color: #d4a84b;
+            font-size: 0.9rem;
+            min-width: 1.8rem;
+            font-weight: 700;
+        }
+
+        .step-label {
+            font-weight: 600;
+            color: #e8d5c0;
+        }
+
+        .step-detail {
+            font-size: 0.9rem;
+            color: #c4b49a;
+            margin-top: 0.1rem;
+        }
+
+        .footnote {
+            font-size: 0.8rem;
+            opacity: 0.6;
+            margin-top: 0.8rem;
+            border-top: 1px solid rgba(212, 168, 75, 0.08);
+            padding-top: 0.8rem;
+            font-style: italic;
+        }
+
+        /* ============================================================
+           BİTKİ & KRİSTAL
+           ============================================================ */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .plant-crystal-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #e8d5c0;
+        }
+
+        .plant-crystal-desc {
+            font-size: 0.9rem;
+            color: #c4b49a;
+            margin-top: 0.2rem;
+        }
+
+        .plant-crystal-note {
+            font-size: 0.85rem;
+            color: #b8a48a;
+            margin-top: 0.4rem;
+            font-style: italic;
+            border-top: 1px solid rgba(212, 168, 75, 0.05);
+            padding-top: 0.4rem;
+        }
+
+        /* ============================================================
+           GENEL YARDIMCILAR
+           ============================================================ */
+        .location-info {
+            text-align: center;
+            padding: 0.4rem 0 0.8rem 0;
+            color: #b8a48a;
+            font-size: 0.8rem;
+            letter-spacing: 0.04em;
+        }
+
+        .loading-text {
+            text-align: center;
+            padding: 1.5rem;
+            color: #b8a48a;
+            font-style: italic;
+            letter-spacing: 0.04em;
+        }
+
+        .error-msg {
+            color: #c0392b;
+            text-align: center;
+            padding: 1.5rem;
+            font-weight: 600;
+            border: 1px solid rgba(192, 57, 43, 0.15);
+            border-radius: 12px;
+            background: rgba(192, 57, 43, 0.05);
+        }
+
+        .time-value {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #d4c3a8;
+            letter-spacing: 0.03em;
+        }
+
+        /* ============================================================
+           MOBİL UYUM (≤640px)
+           ============================================================ */
+        @media (max-width: 640px) {
+            .tabs {
+                gap: 0.3rem;
+                padding: 0.6rem 0.4rem 0.4rem;
             }
 
-            // satır
-            const symSpan = `<span class="planet-symbol ${bodyDef.cls}">${bodyDef.symbol}</span>`;
-            row.innerHTML = `<td>${symSpan} ${bodyDef.label}</td><td>${rise}</td><td>${set}</td><td>${sign}</td>`;
-          } catch (err) {
-            console.warn(`Hesaplama hatası ${bodyDef.label}:`, err);
-            row.innerHTML = `<td><span class="planet-symbol ${bodyDef.cls}">${bodyDef.symbol}</span> ${bodyDef.label}</td><td>—</td><td>—</td><td>—</td>`;
-          }
+            .tab-btn {
+                font-size: 0.6rem;
+                padding: 0.4rem 0.8rem;
+                letter-spacing: 0.04em;
+            }
 
-          // loading satırını kaldır veya replace
-          const loadingRow = tableBody.querySelector('.loading-row');
-          if (loadingRow) loadingRow.remove();
-          tableBody.appendChild(row);
+            .tab-btn .symbol {
+                font-size: 0.9rem;
+                margin-right: 0.2rem;
+            }
 
-          idx++;
-          setTimeout(computeNext, 50);
+            .content-wrapper {
+                padding: 0.8rem 0.8rem 1.5rem;
+            }
+
+            .card {
+                padding: 0.9rem 0.9rem;
+                border-radius: 18px;
+            }
+
+            .card-title {
+                font-size: 0.95rem;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+                gap: 0.6rem;
+            }
+
+            .celestial-table {
+                font-size: 0.7rem;
+            }
+
+            .celestial-table th,
+            .celestial-table td {
+                padding: 0.3rem 0.15rem;
+            }
+
+            .planet-symbol {
+                font-size: 1.1rem;
+                width: 1.4rem;
+            }
+
+            .stat {
+                font-size: 0.85rem;
+            }
+
+            .date-badge {
+                font-size: 0.9rem;
+                padding: 0.2rem 0.8rem;
+            }
+
+            .rituel-step {
+                gap: 0.5rem;
+                padding-left: 0.6rem;
+            }
+
+            .step-num {
+                font-size: 0.8rem;
+                min-width: 1.4rem;
+            }
+
+            .step-label {
+                font-size: 0.85rem;
+            }
+
+            .step-detail {
+                font-size: 0.8rem;
+            }
+
+            .plant-crystal-name {
+                font-size: 1rem;
+            }
+
+            .plant-crystal-desc {
+                font-size: 0.85rem;
+            }
+
+            .plant-crystal-note {
+                font-size: 0.8rem;
+            }
         }
 
-        // ilk çağrı
-        setTimeout(computeNext, 20);
-
-        // ayrıca Güneş burcu ve Ay evresi (bildirge)
-        try {
-          const sun = new Astronomy.Body('Sun');
-          const eqSun = Astronomy.Equator(sun, date, false);
-          const eclSun = Astronomy.EquatorToEcliptic(eqSun);
-          const sunSign = getSignFromLongitude(eclSun.lon * 180 / Math.PI);
-          sunSignDisplay.innerHTML = `<strong>☉ Güneş burcu:</strong> ${sunSign}`;
-        } catch(e) { sunSignDisplay.innerHTML = `<strong>☉ Güneş burcu:</strong> —`; }
-
-        try {
-          const moon = new Astronomy.Body('Moon');
-          const phase = Astronomy.MoonPhase(date);
-          let phaseName = '';
-          const p = phase % 1;
-          if (p < 0.03) phaseName = 'Yeni Ay';
-          else if (p < 0.22) phaseName = 'Hilal';
-          else if (p < 0.28) phaseName = 'İlk Dördün';
-          else if (p < 0.47) phaseName = 'Büyüyen Ay';
-          else if (p < 0.53) phaseName = 'Dolunay';
-          else if (p < 0.72) phaseName = 'Küçülen Ay';
-          else if (p < 0.78) phaseName = 'Son Dördün';
-          else phaseName = 'Eski Ay';
-          moonPhaseDisplay.innerHTML = `<strong>🌙 Ay evresi:</strong> ${phaseName}`;
-        } catch(e) { moonPhaseDisplay.innerHTML = `<strong>🌙 Ay evresi:</strong> —`; }
-      }
-
-      // ----- init -----
-      function init() {
-        if (!checkLib()) {
-          console.error('Astronomy Engine yüklenemedi');
-          tableBody.innerHTML = `<tr><td colspan="4">Astronomi kütüphanesi yüklenemedi</td></tr>`;
-          return;
+        /* ============================================================
+           KAN DAMLASI (GLOBAL)
+           ============================================================ */
+        .blood-drop {
+            position: fixed;
+            font-size: 2.2rem;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.95;
+            will-change: transform, opacity;
         }
-        generateStaticContent();
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+    VİDEO ARKA PLAN
+    ============================================================ -->
+    <div id="video-background">
+        <iframe id="youtubeFrame"
+        src="https://www.youtube.com/embed/JIgOlsfKtYw?autoplay=0&mute=0&loop=1&controls=0&playlist=JIgOlsfKtYw&disablekb=1&modestbranding=1&rel=0"
+        allow="autoplay; encrypted-media" allowfullscreen>
+    </iframe>
+</div>
+
+<!-- ============================================================
+İÇERİK KATMANI
+============================================================ -->
+<div class="overlay" id="app">
+
+    <!-- SEKMELER (SABİT) -->
+    <div class="tabs" id="tabHeaders">
+        <button class="tab-btn active" data-tab="bildirge">
+            <span class="symbol">✦</span> Bildirge
+        </button>
+        <button class="tab-btn" data-tab="gokyuzu">
+            <span class="symbol">☉</span> Gökyüzü
+        </button>
+        <button class="tab-btn" data-tab="bitki">
+            <span class="symbol">🌿</span> Bitki &amp; Kristal
+        </button>
+        <button class="tab-btn" data-tab="rituel">
+            <span class="symbol">🕯</span> Ritüel
+        </button>
+    </div>
+
+    <!-- KAYAN İÇERİK -->
+    <div class="content-wrapper" id="contentWrapper">
+
+        <!-- ==========================================================
+        PANEL 1: BİLDİRGE
+        ========================================================== -->
+        <div class="panel active" id="panel-bildirge">
+            <div class="card">
+                <div class="date-badge" id="dateDisplay">⏳ Yükleniyor...</div>
+                <div id="moonPhaseDisplay" class="stat">
+                    <span class="symbol">🌙</span> <strong>Ay evresi:</strong> hesaplanıyor
+                </div>
+                <div id="sunSignDisplay" class="stat">
+                    <span class="symbol">☉</span> <strong>Güneş burcu:</strong> hesaplanıyor
+                </div>
+                <div id="plantOfDay" class="stat">
+                    <span class="symbol">🌿</span> <strong>Bitki:</strong> —
+                </div>
+                <div id="crystalOfDay" class="stat">
+                    <span class="symbol">💎</span> <strong>Kristal:</strong> —
+                </div>
+                <div id="ritualSummary" class="stat" style="margin-top:0.6rem; border-top:1px solid rgba(212,168,75,0.06); padding-top:0.6rem;">
+                    <span class="symbol">🕯</span> <strong>Ritüel özeti:</strong> —
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================================
+        PANEL 2: GÖKYÜZÜ
+        ========================================================== -->
+        <div class="panel" id="panel-gokyuzu">
+            <div class="card">
+                <div class="card-title">⛧ Gök Cisimleri</div>
+                <div class="location-info" id="observerInfo">📍 İstanbul (varsayılan)</div>
+                <table class="celestial-table" id="celestialTable">
+                    <thead>
+                        <tr>
+                            <th>Cisim</th>
+                            <th>Doğuş</th>
+                            <th>Batış</th>
+                            <th>Burç</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr class="loading-row">
+                            <td colspan="4">⏳ Hesaplanıyor…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ==========================================================
+        PANEL 3: BİTKİ & KRİSTAL
+        ========================================================== -->
+        <div class="panel" id="panel-bitki">
+            <div class="card">
+                <div class="card-title">🌿 Günün Bitkisi</div>
+                <div id="plantDetail" class="stat">
+                    <span class="plant-crystal-name">—</span>
+                    <div class="plant-crystal-desc">—</div>
+                    <div class="plant-crystal-note">Geleneksel kullanım: —</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">💎 Günün Kristali</div>
+                <div id="crystalDetail" class="stat">
+                    <span class="plant-crystal-name">—</span>
+                    <div class="plant-crystal-desc">—</div>
+                    <div class="plant-crystal-note">Geleneksel kullanım: —</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================================
+        PANEL 4: RİTÜEL
+        ========================================================== -->
+        <div class="panel" id="panel-rituel">
+            <div class="card">
+                <div class="card-title">🜁 Ritüel Rehberi</div>
+                <div id="rituelSteps">
+                    <div class="loading-text">⏳ Ritüel hazırlanıyor…</div>
+                </div>
+                <div class="footnote">
+                    Kaynak: Geleneksel cadılık pratikleri ve modern farkındalık teknikleri.
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /content-wrapper -->
+</div><!-- /overlay -->
+
+<script>
+    // ============================================================
+    // 1. KAN DAMLASI (requestAnimationFrame ile)
+    // ============================================================
+    document.addEventListener('click', createBloodDrop);
+    document.addEventListener('contextmenu', function(e) {
+        createBloodDrop(e);
+        e.preventDefault();
+        return false;
+    });
+    document.addEventListener('touchstart', function(e) {
+        if (e.touches.length) {
+            const t = e.touches[0];
+            createBloodDrop({ clientX: t.clientX, clientY: t.clientY });
+        }
+    }, { passive: true });
+
+    function createBloodDrop(event) {
+        const x = event.clientX || window.innerWidth / 2;
+        const y = event.clientY || 0;
+
+        const drop = document.createElement('div');
+        drop.className = 'blood-drop';
+        drop.textContent = '🩸';
+
+        const offsetX = (Math.random() - 0.5) * 180;
+        const startX = window.innerWidth / 2 + offsetX;
+        const startY = -30;
+        const endX = x + offsetX * 0.4;
+        const endY = Math.min(y + 180, window.innerHeight + 30);
+
+        drop.style.left = startX + 'px';
+        drop.style.top = startY + 'px';
+        drop.style.transform = 'scale(0.5) rotate(0deg)';
+        drop.style.fontSize = (1.6 + Math.random() * 1.0) + 'rem';
+
+        document.body.appendChild(drop);
+
+        let startTime = performance.now();
+        const duration = 700 + Math.random() * 400;
+
+        function animateDrop(time) {
+            const elapsed = time - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            // ease-in-out
+            const ease = progress < 0.5 ?
+                2 * progress * progress :
+                1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+            const currentX = startX + (endX - startX) * ease;
+            const currentY = startY + (endY - startY) * ease;
+            const rotation = Math.sin(progress * Math.PI * 2.5) * 20;
+            const scale = progress < 0.15 ?
+                0.5 + progress * 3 :
+                (progress > 0.85 ? 1 - (progress - 0.85) * 5 : 1);
+            const opacity = progress > 0.80 ? 1 - (progress - 0.80) * 5 : 1;
+
+            drop.style.transform =
+                `translate(${currentX - startX}px, ${currentY - startY}px) scale(${scale}) rotate(${rotation}deg)`;
+            drop.style.opacity = Math.max(0, opacity);
+
+            if (progress < 1) {
+                requestAnimationFrame(animateDrop);
+            } else {
+                if (drop.parentNode) drop.parentNode.removeChild(drop);
+            }
+        }
+
+        requestAnimationFrame(animateDrop);
+    }
+
+    // ============================================================
+    // 2. VİDEO BAŞLAT (tıklama/dokunma ile)
+    // ============================================================
+    let videoStarted = false;
+    const iframe = document.getElementById('youtubeFrame');
+
+    function startVideo() {
+        if (videoStarted) return;
+        videoStarted = true;
+        const src = iframe.src;
+        if (src.includes('autoplay=0')) {
+            iframe.src = src.replace('autoplay=0', 'autoplay=1');
+        } else if (!src.includes('autoplay=1')) {
+            iframe.src = src + '&autoplay=1';
+        }
+    }
+
+    document.addEventListener('click', startVideo);
+    document.addEventListener('touchstart', startVideo);
+
+    // ============================================================
+    // 3. SEKME GEÇİŞLERİ
+    // ============================================================
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const panels = {
+        bildirge: document.getElementById('panel-bildirge'),
+        gokyuzu: document.getElementById('panel-gokyuzu'),
+        bitki: document.getElementById('panel-bitki'),
+        rituel: document.getElementById('panel-rituel')
+    };
+
+    tabBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            tabBtns.forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+
+            const tab = this.dataset.tab;
+            Object.keys(panels).forEach(function(key) {
+                panels[key].classList.toggle('active', key === tab);
+            });
+        });
+    });
+
+    // ============================================================
+    // 4. VERİ SETLERİ (Bitki / Kristal / Ay Evresi / Burç)
+    // ============================================================
+    const MOON_PHASES = ['Yeni Ay', 'Hilal', 'İlk Dördün', 'Şişkin Ay (Büyüyen)',
+        'Dolunay', 'Şişkin Ay (Azalan)', 'Son Dördün', 'Son Hilal'
+    ];
+
+    const HERBS = [
+        { name: 'Lavanta (Lavandula angustifolia)', desc: 'Linalool ve linalil asetat; anksiyolitik etki gösterir.',
+            note: 'Sakinleştirici ritüellerde ve koruma büyülerinde kullanılır.' },
+        { name: 'Adaçayı (Salvia officinalis)', desc: 'Rosmarinik asit; antioksidan ve antienflamatuar.',
+            note: 'Arındırma ve bilgelik ritüellerinde yakılır.' },
+        { name: 'Biberiye (Rosmarinus officinalis)', desc: 'Karnosik asit; hafızayı destekleyici.',
+            note: 'Anma ve hatırlama ritüellerinde kullanılır.' },
+        { name: 'Papatya (Matricaria chamomilla)', desc: 'Apigenin; hafif sedatif, uyku kalitesini artırır.',
+            note: 'Uyku ve huzur ritüellerinde tercih edilir.' },
+        { name: 'Melisa (Melissa officinalis)', desc: 'Rosmarinik asit; antiviral ve sakinleştirici.',
+            note: 'Sevgi ve dostluk ritüellerinde kullanılır.' },
+        { name: 'Kekik (Thymus vulgaris)', desc: 'Timol ve karvakrol; güçlü antimikrobiyal.',
+            note: 'Cesaret ve koruma ritüellerinde yakılır.' }
+    ];
+
+    const CRYSTALS = [
+        { name: 'Kuvars (SiO₂)', desc: 'Piezoelektrik; enerji depolama ve iletimi.',
+            note: 'Tüm ritüellerde enerji yükseltici olarak kullanılır.' },
+        { name: 'Ametist (SiO₂+Fe)', desc: 'Demir safsızlığı; trigonal kristal sistem.',
+            note: 'Meditasyon ve ruhsal farkındalık için kullanılır.' },
+        { name: 'Gül Kuvars (SiO₂+Ti/Fe)', desc: 'Titanyum ve demir; pembe renkli trigonal.',
+            note: 'Aşk ve kendini sevme ritüellerinde tercih edilir.' },
+        { name: 'Obsidiyen (volkanik cam)', desc: 'Amorf silikat; Mohs 5-5.5.',
+            note: 'Koruma ve topraklama ritüellerinde kullanılır.' },
+        { name: 'Akik (SiO₂)', desc: 'Mikrokristal kuvars; konsantrik bantlar.',
+            note: 'Denge ve uyum ritüellerinde tercih edilir.' }
+    ];
+
+    function getDailySeed() {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), 0, 0);
+        return Math.floor((now - start) / 86400000);
+    }
+
+    function getDailyItem(arr) {
+        return arr[getDailySeed() % arr.length];
+    }
+
+    function getMoonPhase() {
+        const now = new Date();
+        const base = new Date(2000, 0, 1);
+        const diff = Math.floor((now - base) / 86400000);
+        return MOON_PHASES[Math.floor((diff % 29.53) / 29.53 * 8) % MOON_PHASES.length];
+    }
+
+    function getZodiac() {
+        const now = new Date();
+        const d = now.getDate(),
+            m = now.getMonth() + 1;
+        const signs = [
+            { name: 'Oğlak', start: [1, 1], end: [1, 19] },
+            { name: 'Kova', start: [1, 20], end: [2, 18] },
+            { name: 'Balık', start: [2, 19], end: [3, 20] },
+            { name: 'Koç', start: [3, 21], end: [4, 19] },
+            { name: 'Boğa', start: [4, 20], end: [5, 20] },
+            { name: 'İkizler', start: [5, 21], end: [6, 20] },
+            { name: 'Yengeç', start: [6, 21], end: [7, 22] },
+            { name: 'Aslan', start: [7, 23], end: [8, 22] },
+            { name: 'Başak', start: [8, 23], end: [9, 22] },
+            { name: 'Terazi', start: [9, 23], end: [10, 22] },
+            { name: 'Akrep', start: [10, 23], end: [11, 21] },
+            { name: 'Yay', start: [11, 22], end: [12, 21] },
+            { name: 'Oğlak', start: [12, 22], end: [12, 31] }
+        ];
+        for (var i = 0; i < signs.length; i++) {
+            var s = signs[i];
+            var sm = s.start[0],
+                sd = s.start[1];
+            var em = s.end[0],
+                ed = s.end[1];
+            if ((m === sm && d >= sd) || (m === em && d <= ed)) return s.name;
+        }
+        return 'Oğlak';
+    }
+
+    // ============================================================
+    // 5. ASTRONOMİ FONKSİYONLARI (DOĞRU KULLANIM)
+    // ============================================================
+    function formatTime(date) {
+        if (!date || !(date instanceof Date) || isNaN(date.getTime())) return '—';
+        return String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
+    }
+
+    // DOĞRU: 5 parametre (body, observer, direction, date, dayLimit=300)
+    function calculateRiseSet(body, observer, date, direction) {
+        try {
+            const result = Astronomy.SearchRiseSet(body, observer, direction, date, 300);
+            return result ? result.date : null;
+        } catch (e) {
+            console.warn('Rise/Set hatası:', e.message);
+            return null;
+        }
+    }
+
+    function getSignFromLongitude(deg) {
+        const signs = ['Koç', 'Boğa', 'İkizler', 'Yengeç', 'Aslan', 'Başak',
+            'Terazi', 'Akrep', 'Yay', 'Oğlak', 'Kova', 'Balık'
+        ];
+        const idx = Math.floor(((deg % 360) + 360) % 360 / 30);
+        return signs[idx % 12];
+    }
+
+    function getPlanetEclipticLongitude(body, date) {
+        try {
+            const eq = Astronomy.Equator(body, date, false);
+            const ecl = Astronomy.EquatorToEcliptic(eq);
+            return ecl.lon;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function getLilithLongitude(date) {
+        try {
+            const jd = Astronomy.JulianDay(date);
+            const t = (jd - 2451545) / 36525;
+            let lon = 83.3532430 + 0.1114040 * t * 36525;
+            return ((lon % 360) + 360) % 360;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    // ============================================================
+    // 6. STATİK İÇERİK (Bildirge, Bitki, Kristal, Ritüel)
+    // ============================================================
+    function renderStaticContent() {
+        const now = new Date();
+        const moon = getMoonPhase();
+        const zodiac = getZodiac();
+        const herb = getDailyItem(HERBS);
+        const crystal = getDailyItem(CRYSTALS);
+        const dateStr = now.toLocaleDateString('tr-TR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long'
+        });
+
+        // Bildirge
+        document.getElementById('dateDisplay').textContent = '📅 ' + dateStr;
+        document.getElementById('moonPhaseDisplay').innerHTML =
+            '<span class="symbol">🌙</span> <strong>Ay evresi:</strong> ' + moon;
+        document.getElementById('sunSignDisplay').innerHTML =
+            '<span class="symbol">☉</span> <strong>Güneş burcu:</strong> ' + zodiac;
+        document.getElementById('plantOfDay').innerHTML =
+            '<span class="symbol">🌿</span> <strong>Bitki:</strong> ' + herb.name + ' — ' + herb.desc;
+        document.getElementById('crystalOfDay').innerHTML =
+            '<span class="symbol">💎</span> <strong>Kristal:</strong> ' + crystal.name + ' — ' + crystal.desc;
+        document.getElementById('ritualSummary').innerHTML =
+            '<span class="symbol">🕯</span> <strong>Ritüel özeti:</strong> Bugün ' + moon + ' ve ' + zodiac +
+            ' burcunun etkisiyle, ' + herb.name.split('(')[0].trim() + ' ve ' + crystal.name.split('(')[0].trim() +
+            ' ile niyetini tazele.';
+
+        // Bitki & Kristal detay
+        document.getElementById('plantDetail').innerHTML =
+            '<span class="plant-crystal-name">' + herb.name + '</span>' +
+            '<div class="plant-crystal-desc">' + herb.desc + '</div>' +
+            '<div class="plant-crystal-note">Geleneksel kullanım: ' + herb.note + '</div>';
+
+        document.getElementById('crystalDetail').innerHTML =
+            '<span class="plant-crystal-name">' + crystal.name + '</span>' +
+            '<div class="plant-crystal-desc">' + crystal.desc + '</div>' +
+            '<div class="plant-crystal-note">Geleneksel kullanım: ' + crystal.note + '</div>';
+
+        // Ritüel
+        const ritualSteps = [
+            { label: 'Hazırlık',
+            detail: herb.name.split('(')[0].trim() + ' ve ' + crystal.name.split('(')[0].trim() + '’u önüne koy. Alanı temizle.' },
+            { label: 'Niyet', detail: 'Bugünün ' + moon + ' enerjisinde, ' + zodiac +
+                    ' burcunun rehberliğinde net bir niyet belirle.' },
+            { label: 'Odaklanma', detail: crystal.name.split('(')[0].trim() +
+                    '’ı eline al, nefes al ve bitkinin kokusunu içine çek.' },
+            { label: 'Fısıldama', detail: 'Niyetini üç kez sessizce tekrar et. ' + herb.name.split('(')[0].trim() +
+                    ' enerjisini çağır.' },
+            { label: 'Kapatma', detail: 'Teşekkür et, kristali ve bitkiyi gün boyu yanında taşı veya özel bir yere koy.' }
+        ];
+
+        var stepsHtml = '';
+        for (var i = 0; i < ritualSteps.length; i++) {
+            var s = ritualSteps[i];
+            var num = String(i + 1).padStart(2, '0');
+            stepsHtml +=
+                '<div class="rituel-step">' +
+                '<span class="step-num">' + num + '</span>' +
+                '<div><span class="step-label">' + s.label + '</span>' +
+                '<div class="step-detail">' + s.detail + '</div></div>' +
+                '</div>';
+        }
+        document.getElementById('rituelSteps').innerHTML = stepsHtml;
+    }
+
+    // ============================================================
+    // 7. GÖKYÜZÜ HESAPLAMALARI (SIRALI)
+    // ============================================================
+    const BODIES = [
+        { id: Astronomy.Body.Sun, name: 'Güneş', symbol: '☉', cls: 'sun' },
+        { id: Astronomy.Body.Moon, name: 'Ay', symbol: '☽', cls: 'moon' },
+        { id: Astronomy.Body.Mercury, name: 'Merkür', symbol: '☿', cls: 'mercury' },
+        { id: Astronomy.Body.Venus, name: 'Venüs', symbol: '♀', cls: 'venus' },
+        { id: Astronomy.Body.Mars, name: 'Mars', symbol: '♂', cls: 'mars' },
+        { id: Astronomy.Body.Jupiter, name: 'Jüpiter', symbol: '♃', cls: 'jupiter' },
+        { id: Astronomy.Body.Saturn, name: 'Satürn', symbol: '♄', cls: 'saturn' },
+        { id: Astronomy.Body.Uranus, name: 'Uranüs', symbol: '♅', cls: 'uranus' },
+        { id: Astronomy.Body.Neptune, name: 'Neptün', symbol: '♆', cls: 'neptune' }
+    ];
+
+    let skyRows = [],
+        bodyIndex = 0,
+        skyDone = false;
+    let userLat = 41.0082,
+        userLng = 28.9784,
+        locationReady = false;
+
+    function updateSkyTable() {
+        var html =
+            '<table class="celestial-table">' +
+            '<thead><tr><th>Cisim</th><th>Doğuş</th><th>Batış</th><th>Burç</th></tr></thead>' +
+            '<tbody>' +
+            skyRows.join('') +
+            (bodyIndex < BODIES.length ?
+                '<tr class="loading-row"><td colspan="4">⏳ Hesaplanıyor…</td></tr>' :
+                '') +
+            '</tbody>' +
+            '</table>';
+
+        document.getElementById('tableBody').innerHTML = skyRows.join('') +
+            (bodyIndex < BODIES.length ?
+                '<tr class="loading-row"><td colspan="4">⏳ Hesaplanıyor…</td></tr>' :
+                '');
+    }
+
+    function renderBody(idx) {
+        if (idx >= BODIES.length) {
+            // Lilith ekle
+            try {
+                var lon = getLilithLongitude(new Date());
+                if (lon !== null) {
+                    var sign = getSignFromLongitude(lon);
+                    skyRows.push(
+                        '<tr><td><span class="planet-symbol lilith">⚸</span> Lilith (Black Moon)</td>' +
+                        '<td class="time-value">—</td>' +
+                        '<td class="time-value">—</td>' +
+                        '<td>' + sign + ' (≈' + lon.toFixed(1) + '°)</td></tr>'
+                    );
+                } else {
+                    skyRows.push(
+                        '<tr><td><span class="planet-symbol lilith">⚸</span> Lilith</td>' +
+                        '<td class="time-value">—</td>' +
+                        '<td class="time-value">—</td>' +
+                        '<td>—</td></tr>'
+                    );
+                }
+            } catch (e) {
+                skyRows.push(
+                    '<tr><td><span class="planet-symbol lilith">⚸</span> Lilith</td>' +
+                    '<td class="time-value">—</td>' +
+                    '<td class="time-value">—</td>' +
+                    '<td>—</td></tr>'
+                );
+            }
+            skyDone = true;
+            updateSkyTable();
+            console.log('✅ Gökyüzü tamamlandı.');
+            return;
+        }
+
+        var b = BODIES[idx];
+        var now = new Date();
+        var observer = new Astronomy.Observer(userLat, userLng, 0);
+
+        try {
+            var rise = calculateRiseSet(b.id, observer, now, Astronomy.Rise);
+            var set = calculateRiseSet(b.id, observer, now, Astronomy.Set);
+            var riseStr = formatTime(rise);
+            var setStr = formatTime(set);
+
+            var sign = '';
+            var lon = getPlanetEclipticLongitude(b.id, now);
+            if (lon !== null) {
+                sign = getSignFromLongitude(lon);
+            }
+
+            skyRows.push(
+                '<tr><td><span class="planet-symbol ' + b.cls + '">' + b.symbol + '</span> ' + b.name + '</td>' +
+                '<td class="time-value">' + riseStr + '</td>' +
+                '<td class="time-value">' + setStr + '</td>' +
+                '<td>' + sign + '</td></tr>'
+            );
+        } catch (e) {
+            console.warn(b.name + ' hatası:', e.message);
+            skyRows.push(
+                '<tr><td><span class="planet-symbol ' + b.cls + '">' + b.symbol + '</span> ' + b.name + '</td>' +
+                '<td class="time-value">—</td>' +
+                '<td class="time-value">—</td>' +
+                '<td>—</td></tr>'
+            );
+        }
+
+        bodyIndex = idx + 1;
+        updateSkyTable();
+
+        // SIRALI HESAPLAMA: 50ms gecikme
+        setTimeout(function() { renderBody(bodyIndex); }, 50);
+    }
+
+    function renderSky() {
+        if (skyDone) return;
+        if (typeof Astronomy === 'undefined') {
+            document.getElementById('tableBody').innerHTML =
+                '<tr><td colspan="4" class="error-msg">⚠️ Astronomi kütüphanesi yüklenemedi.</td></tr>';
+            return;
+        }
+        if (!locationReady) {
+            setTimeout(renderSky, 500);
+            return;
+        }
+
+        document.getElementById('observerInfo').textContent =
+            '📍 Enlem: ' + userLat.toFixed(4) + '°, Boylam: ' + userLng.toFixed(4) + '°';
+
+        skyRows = [];
+        bodyIndex = 0;
+        renderBody(0);
+    }
+
+    // ============================================================
+    // 8. KONUM
+    // ============================================================
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(pos) {
+                    userLat = pos.coords.latitude;
+                    userLng = pos.coords.longitude;
+                    locationReady = true;
+                    document.getElementById('observerInfo').textContent =
+                        '📍 Enlem: ' + userLat.toFixed(4) + '°, Boylam: ' + userLng.toFixed(4) + '° (GPS)';
+                    renderSky();
+                },
+                function(err) {
+                    console.warn('Konum alınamadı, İstanbul kullanılıyor.', err.message);
+                    locationReady = true;
+                    document.getElementById('observerInfo').textContent =
+                        '📍 İstanbul (varsayılan)';
+                    renderSky();
+                }, { timeout: 8000, enableHighAccuracy: true }
+            );
+        } else {
+            locationReady = true;
+            document.getElementById('observerInfo').textContent =
+                '📍 İstanbul (varsayılan)';
+            renderSky();
+        }
+    }
+
+    // ============================================================
+    // 9. BAŞLAT
+    // ============================================================
+    var initDone = false;
+
+    function init() {
+        if (initDone) return;
+        initDone = true;
+
+        // Statik içerikleri hemen göster
+        renderStaticContent();
+
+        // Konum al (arka planda)
         getLocation();
-        // eğer konum hemen gelmezse, bekletme yapma; zaten getLocation içinde startComputations çağrılacak
-        // ama lib yüklü ve konum hazır değilse, bir kere daha dene
-        setTimeout(() => {
-          if (libLoaded && !isComputing && observerReady) {
-            startComputations();
-          } else if (libLoaded && !isComputing && !observerReady) {
-            // konum hala gelmediyse varsayılan başlat
-            observerReady = true;
-            observerInfo.textContent = '📍 İstanbul (varsayılan)';
-            startComputations();
-          }
-        }, 1500);
-      }
 
-      // sayfa yüklendi
-      if (document.readyState === 'complete') init();
-      else window.addEventListener('load', init);
-    })();
-  </script>
+        // Astronomy kütüphanesi kontrolü
+        if (typeof Astronomy !== 'undefined') {
+            console.log('✅ Astronomy yüklü.');
+            if (locationReady) renderSky();
+        } else {
+            console.log('⏳ Astronomy bekleniyor...');
+            var checkInterval = setInterval(function() {
+                if (typeof Astronomy !== 'undefined') {
+                    clearInterval(checkInterval);
+                    console.log('✅ Astronomy yüklendi.');
+                    if (locationReady) renderSky();
+                }
+            }, 500);
+
+            setTimeout(function() {
+                clearInterval(checkInterval);
+                if (typeof Astronomy === 'undefined') {
+                    document.getElementById('tableBody').innerHTML =
+                        '<tr><td colspan="4" class="error-msg">⚠️ Astronomi kütüphanesi yüklenemedi. Lütfen sayfayı yenileyin.</td></tr>';
+                }
+            }, 10000);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+
+    // Global hata yakalama
+    window.onerror = function(msg, url, line, col, error) {
+        console.error('❌ Global hata:', msg, error);
+        return true;
+    };
+</script>
 </body>
 </html>
