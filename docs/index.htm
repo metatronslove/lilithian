@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lilithian · Cadı Bildirgeci</title>
 
-    <!-- DOĞRU CDN (KULLANICININ BULDUĞU) -->
+    <!-- ASTRONOMY CDN -->
     <script src="https://unpkg.com/astronomy-engine@2.1.19/astronomy.browser.min.js">
     </script>
 
@@ -26,6 +26,41 @@
             cursor: default;
         }
 
+        /* ----- SVG İKON STİLLERİ ----- */
+        .icon {
+            display: inline-block;
+            width: 1.2em;
+            height: 1.2em;
+            vertical-align: middle;
+            fill: currentColor;
+            stroke: none;
+            flex-shrink: 0;
+        }
+        .icon-sm {
+            width: 1em;
+            height: 1em;
+        }
+        .icon-lg {
+            width: 1.6em;
+            height: 1.6em;
+        }
+        .icon-gold {
+            fill: #d4c3a8;
+        }
+        .icon-moon {
+            fill: #e8d5c0;
+        }
+        .icon-sun {
+            fill: #f5c842;
+        }
+        .icon-planet {
+            fill: #b8a48a;
+        }
+        .icon-lilith {
+            fill: #a58b9e;
+        }
+
+        /* ----- VİDEO ----- */
         .video-wrapper {
             position: fixed;
             top: 0;
@@ -52,6 +87,7 @@
             pointer-events: none;
         }
 
+        /* ----- İÇERİK ----- */
         .content-overlay {
             position: fixed;
             top: 0;
@@ -94,6 +130,7 @@
             border-radius: 8px;
         }
 
+        /* ----- SEKMELER ----- */
         .tabs {
             display: flex;
             gap: 0.3rem;
@@ -116,6 +153,9 @@
             text-transform: uppercase;
             font-weight: 400;
             opacity: 0.5;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         .tab-btn:hover {
             opacity: 1;
@@ -128,6 +168,7 @@
             box-shadow: inset 0 0 0 1px rgba(240, 230, 211, 0.1);
         }
 
+        /* ----- PANELLER ----- */
         .panel {
             display: none;
             animation: fadePanel 0.3s ease;
@@ -155,6 +196,9 @@
             border-bottom: 1px solid rgba(240, 230, 211, 0.06);
             padding-bottom: 0.5rem;
             margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
         }
         .panel .sub {
             font-size: 0.85rem;
@@ -162,6 +206,7 @@
             margin-bottom: 1rem;
         }
 
+        /* ----- TABLO ----- */
         .sky-table {
             width: 100%;
             border-collapse: collapse;
@@ -178,6 +223,7 @@
         .sky-table td {
             padding: 0.4rem 0.2rem;
             border-bottom: 1px solid rgba(240, 230, 211, 0.04);
+            vertical-align: middle;
         }
         .sky-table tr:last-child td {
             border-bottom: none;
@@ -185,6 +231,9 @@
         .sky-table .body-name {
             font-weight: 500;
             color: #e8d5c0;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
         }
         .sky-table .time {
             font-family: 'Courier New', monospace;
@@ -196,6 +245,7 @@
             color: #b8a48a;
         }
 
+        /* ----- KARTLAR ----- */
         .card-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -212,6 +262,9 @@
             color: #e8d5c0;
             font-size: 1rem;
             margin-bottom: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         .card .sci {
             font-size: 0.8rem;
@@ -219,6 +272,7 @@
             line-height: 1.5;
         }
 
+        /* ----- RİTÜEL ----- */
         .ritual-steps {
             counter-reset: step;
             list-style: none;
@@ -248,6 +302,7 @@
             border: 1px solid rgba(240, 230, 211, 0.1);
         }
 
+        /* ----- MOBİL ----- */
         @media (max-width: 640px) {
             .content-box {
                 padding: 1rem 1.2rem;
@@ -257,6 +312,10 @@
             .tab-btn {
                 font-size: 0.65rem;
                 padding: 0.4rem 0.8rem;
+            }
+            .tab-btn .icon {
+                width: 0.9em;
+                height: 0.9em;
             }
             .card-grid {
                 grid-template-columns: 1fr;
@@ -269,6 +328,10 @@
             }
             .panel h2 {
                 font-size: 0.9rem;
+            }
+            .panel h2 .icon {
+                width: 1em;
+                height: 1em;
             }
         }
 
@@ -306,17 +369,121 @@
             padding: 1rem;
             font-weight: bold;
         }
-        .info-msg {
-            color: #f1c40f;
-            text-align: center;
-            padding: 0.5rem;
-            font-size: 0.9rem;
-        }
     </style>
 </head>
 <body>
 
-    <!-- VİDEO -->
+    <!-- ===== SVG SPRITE (TÜM İKONLAR TEK BİR YERDE) ===== -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display:none;">
+
+        <!-- Yıldız (Bildirge) -->
+        <symbol id="icon-star" viewBox="0 0 24 24">
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+        </symbol>
+
+        <!-- Güneş (Gökyüzü) -->
+        <symbol id="icon-sun" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="4" />
+            <line x1="12" y1="20" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="6.34" y2="6.34" />
+            <line x1="17.66" y1="17.66" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="4" y2="12" />
+            <line x1="20" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="6.34" y2="17.66" />
+            <line x1="17.66" y1="6.34" x2="19.78" y2="4.22" />
+        </symbol>
+
+        <!-- Bitki (yaprak) -->
+        <symbol id="icon-herb" viewBox="0 0 24 24">
+            <path d="M12 2C8 4 6 8 6 12C6 16 8 20 12 22C16 20 18 16 18 12C18 8 16 4 12 2Z" />
+            <path d="M12 2V22" />
+            <path d="M6 12H18" />
+            <path d="M12 2C8 4 6 8 6 12" />
+            <path d="M12 2C16 4 18 8 18 12" />
+        </symbol>
+
+        <!-- Mum (Ritüel) -->
+        <symbol id="icon-candle" viewBox="0 0 24 24">
+            <rect x="10" y="12" width="4" height="10" rx="1" />
+            <ellipse cx="12" cy="12" rx="3" ry="2" />
+            <path d="M12 2C10 6 8 8 8 10C8 12 10 14 12 14C14 14 16 12 16 10C16 8 14 6 12 2Z" />
+        </symbol>
+
+        <!-- Hilal (Gökyüzü başlık) -->
+        <symbol id="icon-moon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+        </symbol>
+
+        <!-- Merkür -->
+        <symbol id="icon-mercury" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="4" />
+            <line x1="12" y1="16" x2="12" y2="22" />
+            <circle cx="12" cy="22" r="1.5" />
+        </symbol>
+
+        <!-- Venüs -->
+        <symbol id="icon-venus" viewBox="0 0 24 24">
+            <circle cx="12" cy="10" r="4" />
+            <line x1="12" y1="14" x2="12" y2="20" />
+            <line x1="9" y1="17" x2="15" y2="17" />
+        </symbol>
+
+        <!-- Mars -->
+        <symbol id="icon-mars" viewBox="0 0 24 24">
+            <circle cx="12" cy="10" r="4" />
+            <line x1="12" y1="14" x2="12" y2="20" />
+            <line x1="12" y1="20" x2="15" y2="23" />
+            <line x1="12" y1="20" x2="9" y2="23" />
+        </symbol>
+
+        <!-- Jüpiter -->
+        <symbol id="icon-jupiter" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5" />
+            <path d="M12 7C14 7 16 9 16 12C16 15 14 17 12 17" />
+            <path d="M12 7C10 7 8 9 8 12C8 15 10 17 12 17" />
+        </symbol>
+
+        <!-- Satürn -->
+        <symbol id="icon-saturn" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="4" />
+            <ellipse cx="12" cy="12" rx="8" ry="2.5" transform="rotate(-20 12 12)" />
+        </symbol>
+
+        <!-- Uranüs -->
+        <symbol id="icon-uranus" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="4" />
+            <line x1="12" y1="8" x2="12" y2="4" />
+            <line x1="12" y1="16" x2="12" y2="20" />
+            <line x1="8" y1="12" x2="4" y2="12" />
+            <line x1="16" y1="12" x2="20" y2="12" />
+        </symbol>
+
+        <!-- Neptün -->
+        <symbol id="icon-neptune" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 8C14 8 16 10 16 12C16 14 14 16 12 16" />
+            <path d="M12 8C10 8 8 10 8 12C8 14 10 16 12 16" />
+        </symbol>
+
+        <!-- Lilith (Black Moon) -->
+        <symbol id="icon-lilith" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.5" />
+            <path d="M12 4L12 20" stroke="currentColor" stroke-width="1.5" />
+            <path d="M4 12L20 12" stroke="currentColor" stroke-width="1.5" />
+            <path d="M4 4L20 20" stroke="currentColor" stroke-width="1.5" opacity="0.3" />
+            <path d="M20 4L4 20" stroke="currentColor" stroke-width="1.5" opacity="0.3" />
+            <path d="M12 8C14 8 16 10 16 12C16 14 14 16 12 16C10 16 8 14 8 12C8 10 10 8 12 8Z" fill="currentColor" fill-opacity="0.2" />
+        </symbol>
+
+        <!-- Yıldırım (ritüel notu) -->
+        <symbol id="icon-bolt" viewBox="0 0 24 24">
+            <path d="M13 2L4 14H12L11 22L20 10H12L13 2Z" />
+        </symbol>
+
+    </svg>
+
+    <!-- ===== VİDEO ===== -->
     <div class="video-wrapper">
         <iframe id="youtubeFrame"
         src="https://www.youtube.com/embed/JIgOlsfKtYw?autoplay=0&mute=0&loop=1&controls=0&playlist=JIgOlsfKtYw&disablekb=1&modestbranding=1&rel=0"
@@ -324,21 +491,32 @@
     </iframe>
 </div>
 
-    <!-- İÇERİK -->
+    <!-- ===== İÇERİK ===== -->
     <div class="content-overlay">
         <div class="content-box">
 
             <!-- SEKMELER -->
             <div class="tabs">
-                <button class="tab-btn active" data-tab="tab1">✦ Bildirge</button>
-                <button class="tab-btn" data-tab="tab2">☉ Gökyüzü</button>
-                <button class="tab-btn" data-tab="tab3">🌿 Bitki & Kristal</button>
-                <button class="tab-btn" data-tab="tab4">🕯 Ritüel</button>
+                <button class="tab-btn active" data-tab="tab1">
+                    <svg class="icon"><use href="#icon-star"/></svg> Bildirge
+                </button>
+                <button class="tab-btn" data-tab="tab2">
+                    <svg class="icon"><use href="#icon-sun"/></svg> Gökyüzü
+                </button>
+                <button class="tab-btn" data-tab="tab3">
+                    <svg class="icon"><use href="#icon-herb"/></svg> Bitki & Kristal
+                </button>
+                <button class="tab-btn" data-tab="tab4">
+                    <svg class="icon"><use href="#icon-candle"/></svg> Ritüel
+                </button>
             </div>
 
             <!-- PANEL 1: BİLDİRGE -->
             <div class="panel active" id="tab1">
-                <h2>✧ Günün Cadı Bildirgesi ✧</h2>
+                <h2>
+                    <svg class="icon icon-gold"><use href="#icon-star"/></svg>
+                    Günün Cadı Bildirgesi
+                </h2>
                 <div class="sub" id="dateDisplay"></div>
                 <div style="font-size:1.5rem; font-style:italic; margin:0.8rem 0;" id="messageDisplay">—</div>
                 <div style="display:flex; flex-wrap:wrap; gap:0.5rem 1.2rem; font-size:0.95rem; color:#d4c3a8;" id="quickDetails"></div>
@@ -347,20 +525,29 @@
 
             <!-- PANEL 2: GÖKYÜZÜ -->
             <div class="panel" id="tab2">
-                <h2>☾ Gökyüzü Takvimi · Doğuş & Batış</h2>
+                <h2>
+                    <svg class="icon icon-moon"><use href="#icon-moon"/></svg>
+                    Gökyüzü Takvimi · Doğuş & Batış
+                </h2>
                 <div class="sub" id="locationDisplay">Konum alınıyor…</div>
                 <div id="skyTableContainer"><div class="loading">Göksel veriler hesaplanıyor…</div></div>
             </div>
 
             <!-- PANEL 3: BİTKİ & KRİSTAL -->
             <div class="panel" id="tab3">
-                <h2>🌱 Bitki & Kristal Ansiklopedisi</h2>
+                <h2>
+                    <svg class="icon icon-herb"><use href="#icon-herb"/></svg>
+                    Bitki & Kristal Ansiklopedisi
+                </h2>
                 <div class="card-grid" id="herbCrystalGrid"><div class="loading">Yükleniyor…</div></div>
             </div>
 
             <!-- PANEL 4: RİTÜEL -->
             <div class="panel" id="tab4">
-                <h2>🕯 Ritüel Rehberi · Niyet Çalışması</h2>
+                <h2>
+                    <svg class="icon icon-candle"><use href="#icon-candle"/></svg>
+                    Ritüel Rehberi · Niyet Çalışması
+                </h2>
                 <div id="ritualStepsContainer"><div class="loading">Ritüel hazırlanıyor…</div></div>
             </div>
 
@@ -438,7 +625,7 @@
         }
 
         // ================================================================
-        // 4. VERİ SETLERİ (STATİK İÇERİK)
+        // 4. VERİ SETLERİ
         // ================================================================
         const MOON_PHASES = ['Yeni Ay', 'Hilal', 'İlk Dördün', 'Şişkin Ay (Büyüyen)',
             'Dolunay', 'Şişkin Ay (Azalan)', 'Son Dördün', 'Son Hilal'
@@ -506,7 +693,7 @@
         }
 
         // ================================================================
-        // 5. ASTRONOMİK FONKSİYONLAR (DOĞRU PARAMETRELERLE)
+        // 5. ASTRONOMİK FONKSİYONLAR
         // ================================================================
         function formatTime(date) {
             if (!date || !(date instanceof Date) || isNaN(date.getTime())) return '—';
@@ -515,26 +702,8 @@
 
         function getBodyRiseSet(body, observer, date) {
             try {
-                // DOĞRU: 5 parametreli çağrı
-                const rise = Astronomy.SearchRiseSet(
-                    body,
-                    observer,
-                    Astronomy.Direction.Rise,
-                    date,
-                    2.0, // dayLimit: 2 gün içinde ara
-                    0 // metersAboveGround: deniz seviyesi
-                );
-
-                const set = Astronomy.SearchRiseSet(
-                    body,
-                    observer,
-                    Astronomy.Direction.Set,
-                    date,
-                    2.0,
-                    0
-                );
-
-                // Dönen değerler AstroTime nesnesidir, .date özelliğini kullan
+                const rise = Astronomy.SearchRiseSet(body, observer, Astronomy.Rise, date, 2.0, 0);
+                const set = Astronomy.SearchRiseSet(body, observer, Astronomy.Set, date, 2.0, 0);
                 return {
                     rise: rise ? rise.date : null,
                     set: set ? set.date : null
@@ -575,7 +744,7 @@
         }
 
         // ================================================================
-        // 6. TÜM PANELLERİ RENDER ET (EKSİKSİZ)
+        // 6. RENDER ALL PANELS
         // ================================================================
         let renderDone = false;
 
@@ -601,25 +770,48 @@
             const dateStr = now.toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric',
                 weekday: 'long' });
 
-            // ---- PANEL 1: BİLDİRGE ----
+            // ---- PANEL 1 ----
             document.getElementById('dateDisplay').textContent = dateStr;
             document.getElementById('messageDisplay').textContent = `✦ ${moon} · ${zodiac} ✦`;
-            document.getElementById('quickDetails').innerHTML =
-                `<span>🌿 ${herb.name.split('(')[0].trim()}</span><span>💎 ${crystal.name.split('(')[0].trim()}</span>`;
+            document.getElementById('quickDetails').innerHTML = `
+                    <span>
+                        <svg class="icon icon-sm"><use href="#icon-herb"/></svg>
+                        ${herb.name.split('(')[0].trim()}
+                    </span>
+                    <span>
+                        <svg class="icon icon-sm" style="fill:#b8a48a;"><use href="#icon-lilith"/></svg>
+                        ${crystal.name.split('(')[0].trim()}
+                    </span>
+                `;
             document.getElementById('ritualSummary').innerHTML =
                 `Bugün ${moon} ve ${zodiac} burcunun etkisiyle, ${herb.name.split('(')[0].trim()} ve ${crystal.name.split('(')[0].trim()} ile niyetini tazele.`;
 
-            // ---- PANEL 3: BİTKİ & KRİSTAL ----
+            // ---- PANEL 3 ----
             document.getElementById('herbCrystalGrid').innerHTML = `
-                    <div class="card"><h3>🌿 ${herb.name}</h3><div class="sci">${herb.science}</div></div>
-                    <div class="card"><h3>💎 ${crystal.name}</h3><div class="sci">${crystal.science}</div></div>
+                    <div class="card">
+                        <h3>
+                            <svg class="icon"><use href="#icon-herb"/></svg>
+                            ${herb.name}
+                        </h3>
+                        <div class="sci">${herb.science}</div>
+                    </div>
+                    <div class="card">
+                        <h3>
+                            <svg class="icon" style="fill:#b8a48a;"><use href="#icon-lilith"/></svg>
+                            ${crystal.name}
+                        </h3>
+                        <div class="sci">${crystal.science}</div>
+                    </div>
                     <div class="card" style="grid-column:1/-1;background:rgba(255,255,255,0.02);">
-                        <h3>🧪 Bilimsel Not</h3>
+                        <h3>
+                            <svg class="icon"><use href="#icon-bolt"/></svg>
+                            Bilimsel Not
+                        </h3>
                         <div class="sci">Bu bitki ve kristal, geleneksel cadılıkta kullanıldığı gibi, modern bilim de bu bileşenlerin çeşitli biyokimyasal ve fiziksel özelliklerini doğrulamaktadır.</div>
                     </div>
                 `;
 
-            // ---- PANEL 4: RİTÜEL ----
+            // ---- PANEL 4 ----
             const ritualSteps = [
                 `Hazırlık: ${herb.name.split('(')[0].trim()} ve ${crystal.name.split('(')[0].trim()}’u önüne koy.`,
                 `Niyet: Bugünün ${moon} enerjisinde, ${zodiac} burcunun rehberliğinde net bir niyet belirle.`,
@@ -629,31 +821,32 @@
             ];
             document.getElementById('ritualStepsContainer').innerHTML = `
                     <ol class="ritual-steps">${ritualSteps.map(s => `<li>${s}</li>`).join('')}</ol>
-                    <div style="margin-top:1rem;font-size:0.8rem;color:#b8a48a;border-top:1px solid rgba(240,230,211,0.05);padding-top:0.8rem;">
-                        ⚡ Bu ritüel, hem geleneksel cadı pratiğinden hem de modern farkındalık tekniklerinden esinlenmiştir.
+                    <div style="margin-top:1rem;font-size:0.8rem;color:#b8a48a;border-top:1px solid rgba(240,230,211,0.05);padding-top:0.8rem;display:flex;align-items:center;gap:0.5rem;">
+                        <svg class="icon icon-sm"><use href="#icon-bolt"/></svg>
+                        Bu ritüel, hem geleneksel cadı pratiğinden hem de modern farkındalık tekniklerinden esinlenmiştir.
                     </div>
                 `;
 
-            // ---- PANEL 2: GÖKYÜZÜ (Astronomy ile dinamik) ----
+            // ---- PANEL 2: GÖKYÜZÜ ----
             document.getElementById('locationDisplay').textContent =
                 `📍 Enlem: ${userLat.toFixed(4)}°, Boylam: ${userLng.toFixed(4)}°`;
 
             try {
                 const observer = new Astronomy.Observer(userLat, userLng, 0);
                 const bodies = [
-                    { id: Astronomy.Body.Sun, name: '☀️ Güneş' },
-                    { id: Astronomy.Body.Moon, name: '🌙 Ay' },
-                    { id: Astronomy.Body.Mercury, name: '☿ Merkür' },
-                    { id: Astronomy.Body.Venus, name: '♀ Venüs' },
-                    { id: Astronomy.Body.Mars, name: '♂ Mars' },
-                    { id: Astronomy.Body.Jupiter, name: '♃ Jüpiter' },
-                    { id: Astronomy.Body.Saturn, name: '♄ Satürn' },
-                    { id: Astronomy.Body.Uranus, name: '⛢ Uranüs' },
-                    { id: Astronomy.Body.Neptune, name: '♆ Neptün' }
+                    { id: Astronomy.Body.Sun, name: 'Güneş', icon: 'icon-sun', color: 'icon-sun' },
+                    { id: Astronomy.Body.Moon, name: 'Ay', icon: 'icon-moon', color: 'icon-moon' },
+                    { id: Astronomy.Body.Mercury, name: 'Merkür', icon: 'icon-mercury', color: 'icon-planet' },
+                    { id: Astronomy.Body.Venus, name: 'Venüs', icon: 'icon-venus', color: 'icon-planet' },
+                    { id: Astronomy.Body.Mars, name: 'Mars', icon: 'icon-mars', color: 'icon-planet' },
+                    { id: Astronomy.Body.Jupiter, name: 'Jüpiter', icon: 'icon-jupiter', color: 'icon-planet' },
+                    { id: Astronomy.Body.Saturn, name: 'Satürn', icon: 'icon-saturn', color: 'icon-planet' },
+                    { id: Astronomy.Body.Uranus, name: 'Uranüs', icon: 'icon-uranus', color: 'icon-planet' },
+                    { id: Astronomy.Body.Neptune, name: 'Neptün', icon: 'icon-neptune', color: 'icon-planet' }
                 ];
 
                 let tableRows = '';
-                bodies.forEach(({ id, name }) => {
+                bodies.forEach(({ id, name, icon, color }) => {
                     const { rise, set } = getBodyRiseSet(id, observer, now);
                     const riseStr = rise ? formatTime(rise) : '—';
                     const setStr = set ? formatTime(set) : '—';
@@ -668,7 +861,10 @@
                         if (lon !== null) signInfo = ` · ${getSignFromLongitude(lon)}`;
                     }
                     tableRows += `<tr>
-                            <td class="body-name">${name}</td>
+                            <td class="body-name">
+                                <svg class="icon icon-sm ${color}"><use href="#${icon}"/></svg>
+                                ${name}
+                            </td>
                             <td class="time">${riseStr}</td>
                             <td class="time">${setStr}</td>
                             <td class="info">${signInfo}</td>
@@ -680,13 +876,22 @@
                 if (lilithLon !== null) {
                     const lilithSign = getSignFromLongitude(lilithLon);
                     tableRows += `<tr>
-                            <td class="body-name">🜁 Lilith (Black Moon)</td>
+                            <td class="body-name">
+                                <svg class="icon icon-sm icon-lilith"><use href="#icon-lilith"/></svg>
+                                Lilith (Black Moon)
+                            </td>
                             <td class="time">—</td>
                             <td class="time">—</td>
                             <td class="info">${lilithSign} (≈${lilithLon.toFixed(1)}°)</td>
                         </tr>`;
                 } else {
-                    tableRows += `<tr><td class="body-name">🜁 Lilith</td><td colspan="3" class="info">—</td></tr>`;
+                    tableRows += `<tr>
+                            <td class="body-name">
+                                <svg class="icon icon-sm icon-lilith"><use href="#icon-lilith"/></svg>
+                                Lilith
+                            </td>
+                            <td colspan="3" class="info">—</td>
+                        </tr>`;
                 }
 
                 document.getElementById('skyTableContainer').innerHTML = `
@@ -712,11 +917,8 @@
         // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Lilithian başlatılıyor...');
-
-            // Konumu al
             getLocation();
 
-            // Astronomy yüklenene kadar bekle
             let checkCount = 0;
             const checkInterval = setInterval(() => {
                 checkCount++;
@@ -733,9 +935,6 @@
             }, 300);
         });
 
-        // ================================================================
-        // 8. HATA YAKALAMA
-        // ================================================================
         window.onerror = function(msg, url, line, col, error) {
             console.error('❌ Global hata:', msg, error);
             return true;
