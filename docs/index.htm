@@ -10,6 +10,7 @@
     <script src="https://unpkg.com/astronomy-engine@2.1.19/astronomy.browser.min.js">
     </script>
     <style>
+        /* ===== TÜM STILLER (AYNI) ===== */
         * {
             margin: 0;
             padding: 0;
@@ -101,7 +102,6 @@
             background: rgba(212, 168, 75, .3);
             border-radius: 8px;
         }
-
         .tab-btn {
             background: transparent;
             border: none;
@@ -140,7 +140,6 @@
         .tab-btn.active .symbol {
             opacity: 1;
         }
-
         .panel {
             display: none;
             animation: fade .4s ease;
@@ -177,7 +176,6 @@
             margin-bottom: 1rem;
             letter-spacing: .5px;
         }
-
         .sky-table {
             width: 100%;
             border-collapse: collapse;
@@ -230,7 +228,6 @@
             color: #b8a48a;
             font-style: italic;
         }
-
         .symbol-sun {
             color: #f5c842;
         }
@@ -261,7 +258,6 @@
         .symbol-lilith {
             color: #a58b9e;
         }
-
         .card-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -294,7 +290,6 @@
         .card .emoji-big {
             font-size: 2rem;
         }
-
         .ritual-steps {
             counter-reset: step;
             list-style: none;
@@ -326,7 +321,6 @@
             border: 1px solid rgba(212, 168, 75, .15);
             font-weight: 700;
         }
-
         #messageDisplay {
             font: 1.7rem/1 'Cinzel Decorative', serif;
             color: #f5eee7;
@@ -346,7 +340,6 @@
             color: #d4c3a8;
             line-height: 1.6;
         }
-
         .click-hint {
             position: fixed;
             bottom: 2rem;
@@ -393,7 +386,6 @@
             font-size: .85rem;
             font-style: italic;
         }
-
         @media (max-width: 640px) {
             .content-box {
                 padding: 1.2rem;
@@ -469,7 +461,6 @@
     <div class="content-overlay">
         <div class="content-box">
 
-            <!-- SEKMELER SABİT -->
             <div class="tabs">
                 <button class="tab-btn active" data-tab="tab1"><span class="symbol">✦</span> Bildirge</button>
                 <button class="tab-btn" data-tab="tab2"><span class="symbol">☉</span> Gökyüzü</button>
@@ -477,7 +468,6 @@
                 <button class="tab-btn" data-tab="tab4"><span class="symbol">🕯</span> Ritüel</button>
             </div>
 
-            <!-- KAYAN İÇERİK -->
             <div class="scroll-content">
 
                 <div class="panel active" id="tab1">
@@ -504,9 +494,9 @@
                     <div id="ritualStepsContainer"><div class="loading">Ritüel hazırlanıyor…</div></div>
                 </div>
 
-            </div><!-- /scroll-content -->
-        </div><!-- /content-box -->
-    </div><!-- /content-overlay -->
+            </div>
+        </div>
+    </div>
 
     <div class="click-hint">✦ sayfaya dokun / tıkla ✦</div>
 
@@ -634,19 +624,17 @@
         };
 
         // ============================================================
-        // 4. ASTRONOMİ – DOĞRUDAN ÇALIŞAN PROJEDEN ALINAN KOD
+        // 4. ASTRONOMİ – DOĞRUDAN ÇALIŞAN PROJEDEN
         // ============================================================
         const fmt = d => d && d instanceof Date && !isNaN(d) ? String(d.getHours()).padStart(2, '0') + ':' + String(d
             .getMinutes()).padStart(2, '0') : '—';
 
         function getRiseSet(body, observer, date) {
             try {
-                // Günün başlangıcı
                 const start = new Date(date);
                 start.setHours(0, 0, 0, 0);
 
-                // ÇALIŞAN PROJEDEKİ GİBİ: 5. PARAMETRE HORIZON (varsayılan -0.833)
-                // Burada açıkça -0.833 veriyorum.
+                // ÇALIŞAN PROJEDEKİ GİBİ: 5. PARAMETRE HORIZON
                 const horizon = -0.833;
 
                 const rise = Astronomy.SearchRiseSet(body, observer, Astronomy.Rise, start, horizon);
@@ -716,7 +704,7 @@
         }
 
         // ============================================================
-        // 6. ASENKRON GÖKYÜZÜ (SIRALI)
+        // 6. ASENKRON GÖKYÜZÜ (SIRALI) – LİLİTH 2 KEZ GÖSTERİLMİYOR
         // ============================================================
         const BODIES = [
             { id: Astronomy.Body.Sun, name: 'Güneş', symbol: '☉', cls: 'symbol-sun' },
@@ -751,6 +739,7 @@
 
         function renderBody(idx) {
             if (idx >= BODIES.length) {
+                // LİLİTH SADECE BURADA EKLENİYOR – 2 KEZ DEĞİL
                 const lon = lilithLon(new Date());
                 if (lon !== null) skyRows.push(
                     `<tr><td class="body-name"><span class="symbol symbol-lilith">⚸</span> Lilith (Black Moon)</td><td class="time">—</td><td class="time">—</td><td class="info">${signFromLon(lon)} (≈${lon.toFixed(1)}°)</td></tr>`
