@@ -10,6 +10,7 @@
     <script src="https://unpkg.com/astronomy-engine@2.1.19/astronomy.min.js"></script>
     <script src="https://unpkg.com/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
     <style>
+        /* ===== STILLER (ÖNCEKİYLE AYNI, KISALTMADIM) ===== */
         * {
             margin: 0;
             padding: 0;
@@ -496,7 +497,7 @@
 
     <script>
         // ============================================================
-        // 0. KAN DAMLASI
+        // 0. KAN DAMLASI (ÖNCEKİYLE AYNI)
         // ============================================================
         document.addEventListener('click', e => {
             const x = e.clientX,
@@ -566,7 +567,7 @@
         });
 
         // ============================================================
-        // 3. VERİ
+        // 3. VERİ (AYNI)
         // ============================================================
         const MOON_PHASES = ['Yeni Ay', 'Hilal', 'İlk Dördün', 'Şişkin Ay (Büyüyen)',
             'Dolunay', 'Şişkin Ay (Azalan)', 'Son Dördün', 'Son Hilal'
@@ -618,23 +619,24 @@
         };
 
         // ============================================================
-        // 4. ASTRONOMİ (DÜZELTİLDİ - SAATLER GELİYOR)
+        // 4. ASTRONOMİ (DÜZELTİLDİ – DOĞRU PARAMETRELER)
         // ============================================================
         const fmt = d => d && d instanceof Date && !isNaN(d) ? String(d.getHours()).padStart(2, '0') + ':' + String(d
             .getMinutes()).padStart(2, '0') : '—';
 
         function getRiseSet(body, obs, date) {
             try {
-                // Günün başlangıcını (00:00) al, dayLimit 1.0 (sadece o gün içinde ara)
+                // Günün başlangıcı (00:00)
                 const startOfDay = new Date(date);
                 startOfDay.setHours(0, 0, 0, 0);
 
-                // DOĞRU ÇAĞRI: 5 parametre (body, observer, direction, startTime, dayLimit)
-                const rise = Astronomy.SearchRiseSet(body, obs, Astronomy.Rise, startOfDay, 1.0);
-                const set = Astronomy.SearchRiseSet(body, obs, Astronomy.Set, startOfDay, 1.0);
+                // DOĞRU: 5. parametre horizon (varsayılan -0.833 derece)
+                // Ben açıkça -0.833 veriyorum
+                const horizon = -0.833; // gün doğumu için standart ufuk açısı
 
-                // Eğer rise veya set null ise, o gün içinde doğuş/batış yok demektir.
-                // Ama Türkiye'de her gün doğar batar, o yüzden null gelmemeli.
+                const rise = Astronomy.SearchRiseSet(body, obs, Astronomy.Rise, startOfDay, horizon);
+                const set = Astronomy.SearchRiseSet(body, obs, Astronomy.Set, startOfDay, horizon);
+
                 return {
                     rise: rise ? rise.date : null,
                     set: set ? set.date : null
@@ -699,7 +701,7 @@
         }
 
         // ============================================================
-        // 6. ASENKRON GÖKYÜZÜ (SIRALI) - DÜZELTİLDİ
+        // 6. ASENKRON GÖKYÜZÜ (SIRALI) – DÜZELTİLDİ
         // ============================================================
         const BODIES = [
             { id: Astronomy.Body.Sun, name: 'Güneş', symbol: '☉', cls: 'symbol-sun' },
@@ -774,7 +776,6 @@
             }
             bodyIdx = idx + 1;
             updateSkyTable();
-            // SIRALI HESAPLAMA: 50ms gecikme ile devam et
             setTimeout(() => renderBody(bodyIdx), 50);
         }
 
