@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lilithian · Cadı Bildirgeci</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet" />
     <script src="https://unpkg.com/astronomy-engine@2.1.19/astronomy.browser.min.js">
     </script>
     <style>
-        /* ===== TÜM STILLER (ÖNCEKİYLE AYNI, SADECE TEMEL) ===== */
+        /* --- Tüm stiller aynı, sadece temel olarak kısaltıldı --- */
         * {
             margin: 0;
             padding: 0;
@@ -221,6 +221,12 @@
         .sky-table .info {
             font-size: .8rem;
             color: #c4b49a;
+        }
+        .sky-table .loading-row td {
+            text-align: center;
+            padding: .8rem;
+            color: #b8a48a;
+            font-style: italic;
         }
         .symbol-sun {
             color: #f5c842;
@@ -618,33 +624,28 @@
         };
 
         // ============================================================
-        // 4. ASTRONOMİ – DOĞRUDAN ÇALIŞAN PROJEDEN BİREBİR
+        // 4. ASTRONOMİ – ÇALIŞAN PROJEDEKİ GİBİ
         // ============================================================
         const fmt = d => d && d instanceof Date && !isNaN(d) ? String(d.getHours()).padStart(2, '0') + ':' + String(d
             .getMinutes()).padStart(2, '0') : '—';
 
-        // ÇALIŞAN PROJEDEKİ calculateRiseSet FONKSİYONU
+        // ÇALIŞAN PROJEDEKİ GİBİ: 5. parametre dayLimit = 300
         function calculateRiseSet(bodyId, observer, date, direction) {
             try {
-                // 5. parametre: dayLimit = 300 (çalışan projede böyle)
                 const time = Astronomy.SearchRiseSet(bodyId, observer, direction, date, 300);
                 return time ? new Date(time) : null;
             } catch (e) {
-                console.error(`Doğuş/batış hesaplama hatası (${bodyId}):`, e);
                 return null;
             }
         }
 
-        // Gezegen konumu hesaplama (çalışan projeden)
         function calculatePosition(bodyId, date, lat, lon) {
             try {
                 const observer = new Astronomy.Observer(lat, lon, 0);
                 const { ra, dec } = Astronomy.Equator(bodyId, date, observer, true, true);
                 const { altitude, azimuth } = Astronomy.Horizon(date, observer, ra, dec, 'normal');
-                const distance = Astronomy.Equator(bodyId, date, observer, true, true).dist;
-                return { altitude, azimuth, distance };
+                return { altitude, azimuth };
             } catch (e) {
-                console.error(`Konum hesaplama hatası (${bodyId}):`, e);
                 return null;
             }
         }
@@ -667,7 +668,7 @@
         };
 
         // ============================================================
-        // 5. STATİK İÇERİK
+        // 5. STATİK İÇERİK (HEMEN, SETTIMEOUT YOK)
         // ============================================================
         function renderStatic() {
             const now = new Date(),
@@ -703,7 +704,7 @@
         }
 
         // ============================================================
-        // 6. GÖKYÜZÜ TABLOSU – SETTIMEOUT YOK, DOĞRUDAN HESAPLA
+        // 6. SIRALI HESAPLAMA (SETTIMEOUT İLE) – DOĞRU ÇALIŞAN
         // ============================================================
         const BODIES = [
             { id: 'Sun', name: 'Güneş', symbol: '☉', cls: 'symbol-sun' },
@@ -717,99 +718,104 @@
             { id: 'Neptune', name: 'Neptün', symbol: '♆', cls: 'symbol-neptune' }
         ];
 
-        let skyDone = false,
+        let skyRows = [],
+            bodyIdx = 0,
+            skyDone = false,
             lat = 41.0082,
             lng = 28.9784,
             locReady = false,
             zSign = zodiac();
 
-        function renderSky() {
-            if (skyDone || typeof Astronomy === 'undefined' || !locReady) {
-                if (!skyDone && typeof Astronomy === 'undefined') {
-                    document.getElementById('skyTableContainer').innerHTML =
-                        '<div class="sky-loading">⏳ Astronomi verileri yükleniyor…</div>';
-                    setTimeout(renderSky, 2000);
-                } else if (!skyDone && !locReady) {
-                    document.getElementById('skyTableContainer').innerHTML =
-                        '<div class="sky-loading">📍 Konum bekleniyor…</div>';
-                    setTimeout(renderSky, 1000);
-                }
-                return;
-            }
-
-            console.log('🚀 Gökyüzü hesaplanıyor (setTimeout YOK)');
-
-            const now = new Date();
-            const observer = new Astronomy.Observer(lat, lng, 0);
-            let rows = '';
-
-            BODIES.forEach(body => {
-                try {
-                    // Konum hesapla
-                    const pos = calculatePosition(body.id, now, lat, lng);
-                    const alt = pos ? pos.altitude : null;
-                    const az = pos ? pos.azimuth : null;
-
-                    // Doğuş/batış hesapla (çalışan projedeki fonksiyon)
-                    const rise = calculateRiseSet(body.id, observer, now, Astronomy.Rise);
-                    const set = calculateRiseSet(body.id, observer, now, Astronomy.Set);
-                    const riseStr = rise ? fmt(rise) : '—';
-                    const setStr = set ? fmt(set) : '—';
-
-                    let sign = '';
-                    if (body.id !== 'Sun' && body.id !== 'Moon') {
-                        const lon = planetLon(body.id, now);
-                        if (lon !== null) sign = ` · ${signFromLon(lon)}`;
-                    } else if (body.id === 'Sun') sign = ` · ${zSign}`;
-                    else {
-                        const lon = planetLon(body.id, now);
-                        if (lon !== null) sign = ` · ${signFromLon(lon)}`;
-                    }
-
-                    rows += `<tr>
-                        <td class="body-name"><span class="symbol ${body.cls}">${body.symbol}</span> ${body.name}</td>
-                        <td class="time">${riseStr}</td>
-                        <td class="time">${setStr}</td>
-                        <td class="info">${sign}</td>
-                    </tr>`;
-                } catch (e) {
-                    console.error(`${body.name} hatası:`, e);
-                    rows += `<tr>
-                        <td class="body-name"><span class="symbol ${body.cls}">${body.symbol}</span> ${body.name}</td>
-                        <td colspan="3" class="info">—</td>
-                    </tr>`;
-                }
-            });
-
-            // Lilith
-            const lilithLon = lilithLon(now);
-            if (lilithLon !== null) {
-                rows += `<tr>
-                    <td class="body-name"><span class="symbol symbol-lilith">⚸</span> Lilith (Black Moon)</td>
-                    <td class="time">—</td>
-                    <td class="time">—</td>
-                    <td class="info">${signFromLon(lilithLon)} (≈${lilithLon.toFixed(1)}°)</td>
-                </tr>`;
-            } else {
-                rows += `<tr>
-                    <td class="body-name"><span class="symbol symbol-lilith">⚸</span> Lilith</td>
-                    <td colspan="3" class="info">—</td>
-                </tr>`;
-            }
-
-            document.getElementById('locationDisplay').textContent =
-                `📍 Enlem: ${lat.toFixed(4)}°, Boylam: ${lng.toFixed(4)}°`;
+        function updateSkyTable() {
             document.getElementById('skyTableContainer').innerHTML = `
                 <table class="sky-table">
                     <thead><tr><th>Gök Cismi</th><th>Doğuş</th><th>Batış</th><th>Burç / Not</th></tr></thead>
-                    <tbody>${rows}</tbody>
+                    <tbody>
+                        ${skyRows.join('')}
+                        ${bodyIdx < BODIES.length ? '<tr class="loading-row"><td colspan="4">⏳ Hesaplanıyor…</td></tr>' : ''}
+                    </tbody>
                 </table>
                 <div style="margin-top:.8rem;font-size:.7rem;color:#6a5f53;text-align:right;">
                     * Yaklaşık değerler, ±2 dakika hata olabilir.
                 </div>`;
+        }
 
-            skyDone = true;
-            console.log('✅ Gökyüzü tamamlandı.');
+        function renderBody(idx) {
+            if (idx >= BODIES.length) {
+                const lon = lilithLon(new Date());
+                if (lon !== null) {
+                    skyRows.push(
+                        `<tr><td class="body-name"><span class="symbol symbol-lilith">⚸</span> Lilith (Black Moon)</td><td class="time">—</td><td class="time">—</td><td class="info">${signFromLon(lon)} (≈${lon.toFixed(1)}°)</td></tr>`
+                        );
+                } else {
+                    skyRows.push(
+                        `<tr><td class="body-name"><span class="symbol symbol-lilith">⚸</span> Lilith</td><td colspan="3" class="info">—</td></tr>`
+                        );
+                }
+                skyDone = true;
+                updateSkyTable();
+                console.log('✅ Gökyüzü tamamlandı.');
+                return;
+            }
+
+            const b = BODIES[idx];
+            const now = new Date();
+            const observer = new Astronomy.Observer(lat, lng, 0);
+
+            try {
+                const rise = calculateRiseSet(b.id, observer, now, Astronomy.Rise);
+                const set = calculateRiseSet(b.id, observer, now, Astronomy.Set);
+                const riseStr = rise ? fmt(rise) : '—';
+                const setStr = set ? fmt(set) : '—';
+
+                let sign = '';
+                if (b.id !== 'Sun' && b.id !== 'Moon') {
+                    const lon = planetLon(b.id, now);
+                    if (lon !== null) sign = ` · ${signFromLon(lon)}`;
+                } else if (b.id === 'Sun') {
+                    sign = ` · ${zSign}`;
+                } else {
+                    const lon = planetLon(b.id, now);
+                    if (lon !== null) sign = ` · ${signFromLon(lon)}`;
+                }
+
+                skyRows.push(
+                    `<tr><td class="body-name"><span class="symbol ${b.cls}">${b.symbol}</span> ${b.name}</td><td class="time">${riseStr}</td><td class="time">${setStr}</td><td class="info">${sign}</td></tr>`
+                    );
+            } catch (e) {
+                skyRows.push(
+                    `<tr><td class="body-name"><span class="symbol ${b.cls}">${b.symbol}</span> ${b.name}</td><td colspan="3" class="info">—</td></tr>`
+                    );
+            }
+
+            bodyIdx = idx + 1;
+            updateSkyTable();
+
+            // SIRALI HESAPLAMA: Bu setTimeout DOĞRU ve GEREKLİ
+            setTimeout(() => renderBody(bodyIdx), 50);
+        }
+
+        function renderSky() {
+            if (skyDone || typeof Astronomy === 'undefined' || !locReady) {
+                // Kütüphane veya konum hazır değilse, sadece mesaj göster, setTimeout ile bekleme yapma
+                if (!skyDone && typeof Astronomy === 'undefined') {
+                    document.getElementById('skyTableContainer').innerHTML =
+                        '<div class="sky-loading">⏳ Astronomi verileri yükleniyor…</div>';
+                    // Burada setTimeout kullanmıyorum, çünkü init içinde zaten interval var.
+                } else if (!skyDone && !locReady) {
+                    document.getElementById('skyTableContainer').innerHTML =
+                        '<div class="sky-loading">📍 Konum bekleniyor…</div>';
+                }
+                return;
+            }
+
+            document.getElementById('locationDisplay').textContent =
+                `📍 Enlem: ${lat.toFixed(4)}°, Boylam: ${lng.toFixed(4)}°`;
+            skyRows = [];
+            bodyIdx = 0;
+            zSign = zodiac();
+            // Sıralı hesaplamayı başlat
+            renderBody(0);
         }
 
         // ============================================================
@@ -817,15 +823,21 @@
         // ============================================================
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
-                pos => { lat = pos.coords.latitude;
+                pos => {
+                    lat = pos.coords.latitude;
                     lng = pos.coords.longitude;
                     locReady = true;
-                    renderSky(); },
-                () => { locReady = true;
-                    renderSky(); }, { timeout: 8000, enableHighAccuracy: true }
+                    renderSky();
+                },
+                () => {
+                    locReady = true;
+                    renderSky();
+                }, { timeout: 8000, enableHighAccuracy: true }
             );
-        } else { locReady = true;
-            renderSky(); }
+        } else {
+            locReady = true;
+            renderSky();
+        }
 
         // ============================================================
         // 8. BAŞLAT
@@ -836,19 +848,28 @@
             if (initDone) return;
             initDone = true;
             renderStatic();
-            if (typeof Astronomy !== 'undefined') renderSky();
-            else {
+
+            // Kütüphane yüklenene kadar bekle (sadece burada interval var)
+            if (typeof Astronomy !== 'undefined') {
+                renderSky();
+            } else {
                 const iv = setInterval(() => {
-                    if (typeof Astronomy !== 'undefined') { clearInterval(iv);
-                        renderSky(); }
-                }, 500);
+                    if (typeof Astronomy !== 'undefined') {
+                        clearInterval(iv);
+                        renderSky();
+                    }
+                }, 200);
+                // 10 saniye sonra interval temizlenir, hata mesajı gösterilir
                 setTimeout(() => {
                     clearInterval(iv);
-                    if (typeof Astronomy === 'undefined') document.getElementById('skyTableContainer').innerHTML =
-                        '<div class="error-msg">⚠️ Astronomi yüklenemedi.</div>';
+                    if (typeof Astronomy === 'undefined') {
+                        document.getElementById('skyTableContainer').innerHTML =
+                            '<div class="error-msg">⚠️ Astronomi yüklenemedi.</div>';
+                    }
                 }, 10000);
             }
         }
+
         document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
 
         window.onerror = (msg) => console.error('❌', msg);
