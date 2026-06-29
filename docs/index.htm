@@ -620,7 +620,7 @@
         };
 
         // ============================================================
-        // 4. ASTRONOMİ (DOĞRU – SADECE TARAYICI KÜTÜPHANESİ)
+        // 4. ASTRONOMİ – KESİN ÇÖZÜM (horizon parametresi kaldırıldı)
         // ============================================================
         const fmt = d => d && d instanceof Date && !isNaN(d) ? String(d.getHours()).padStart(2, '0') + ':' + String(d
             .getMinutes()).padStart(2, '0') : '—';
@@ -631,12 +631,14 @@
                 const startOfDay = new Date(date);
                 startOfDay.setHours(0, 0, 0, 0);
 
-                // 5. parametre horizon: -0.833 derece (gün doğumu/gün batımı için standart)
-                const horizon = -0.833;
+                // SADECE 4 PARAMETRE: body, observer, direction, startTime
+                // Horizon (5. parametre) verilmiyor, böylece varsayılan -0.833 kullanılır.
+                const rise = Astronomy.SearchRiseSet(body, obs, Astronomy.Rise, startOfDay);
+                const set = Astronomy.SearchRiseSet(body, obs, Astronomy.Set, startOfDay);
 
-                // DOĞRU ÇAĞRI: 5 parametre
-                const rise = Astronomy.SearchRiseSet(body, obs, Astronomy.Rise, startOfDay, horizon);
-                const set = Astronomy.SearchRiseSet(body, obs, Astronomy.Set, startOfDay, horizon);
+                // Hata ayıklama için konsola yazdır
+                console.log(`${body} doğuş:`, rise ? rise.date : 'null');
+                console.log(`${body} batış:`, set ? set.date : 'null');
 
                 return {
                     rise: rise ? rise.date : null,
@@ -702,7 +704,7 @@
         }
 
         // ============================================================
-        // 6. ASENKRON GÖKYÜZÜ (SIRALI)
+        // 6. ASENKRON GÖKYÜZÜ (SIRALI) - KESİN ÇÖZÜM
         // ============================================================
         const BODIES = [
             { id: Astronomy.Body.Sun, name: 'Güneş', symbol: '☉', cls: 'symbol-sun' },
