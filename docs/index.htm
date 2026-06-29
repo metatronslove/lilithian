@@ -623,23 +623,20 @@
         };
 
         // ============================================================
-        // 4. ASTRONOMİ – ÇALIŞAN PROJEDEN (calculateRiseSet)
+        // 4. ASTRONOMİ – TEK SEFERDE HESAPLA
         // ============================================================
         const fmt = d => d && d instanceof Date && !isNaN(d) ? String(d.getHours()).padStart(2, '0') + ':' + String(d
             .getMinutes()).padStart(2, '0') : '—';
 
-        // ÇALIŞAN PROJEDEKİ calculateRiseSet (5. parametre dayLimit = 300)
         function calculateRiseSet(bodyId, observer, date, direction) {
             try {
                 const time = Astronomy.SearchRiseSet(bodyId, observer, direction, date, 300);
                 return time ? new Date(time) : null;
             } catch (e) {
-                console.error(`Doğuş/batış hatası (${bodyId}):`, e);
                 return null;
             }
         }
 
-        // Gezegen konumu (burç için)
         function getPlanetEclipticLongitude(bodyId, date) {
             try {
                 const eq = Astronomy.Equator(bodyId, date, false);
@@ -665,8 +662,144 @@
             } catch { return null; }
         };
 
+        const BODIES = [
+            { id: 'Sun', name: 'Güneş', symbol: '☉', cls: 'symbol-sun' },
+            { id: 'Moon', name: 'Ay', symbol: '☽', cls: 'symbol-moon' },
+            { id: 'Mercury', name: 'Merkür', symbol: '☿', cls: 'symbol-mercury' },
+            { id: 'Venus', name: 'Venüs', symbol: '♀', cls: 'symbol-venus' },
+            { id: 'Mars', name: 'Mars', symbol: '♂', cls: 'symbol-mars' },
+            { id: 'Jupiter', name: 'Jüpiter', symbol: '♃', cls: 'symbol-jupiter' },
+            { id: 'Saturn', name: 'Satürn', symbol: '♄', cls: 'symbol-saturn' },
+            { id: 'Uranus', name: 'Uranüs', symbol: '♅', cls: 'symbol-uranus' },
+            { id: 'Neptune', name: 'Neptün', symbol: '♆', cls: 'symbol-neptune' }
+        ];
+
+        let lat = 41.0082,
+            lng = 28.9784,
+            locReady = false;
+
         // ============================================================
-        // 5. STATİK İÇERİK
+        // 5. GÖKYÜZÜ RENDER (TEK SEFER)
+        // ============================================================
+        function renderSky() {
+            if (typeof Astronomy === 'undefined') {
+                document.getElementById('skyTableContainer').innerHTML =
+                    '<div class="sky-loading">⏳ Astronomi verileri yükleniyor…</div>';
+                setTimeout(renderSky, 2000);
+                return;
+            }
+            if (!locReady) {
+                document.getElementById('skyTableContainer').innerHTML =
+                    '<div class="sky-loading">📍 Konum bekleniyor…</div>';
+                setTimeout(renderSky, 1000);
+                return;
+            }
+
+            const observer = new Astronomy.Observer(lat, lng, 0);
+            document.getElementById('locationDisplay').textContent =
+                `📍 Enlem: ${lat.toFixed(4)}°, Boylam: ${lng.toFixed(4)}°`;
+
+            const now = new Date();
+            const rows = [];
+            const zSign = zodiac();
+
+            BODIES.forEach(b => {
+                try {
+                    const rise = calculateRiseSet(b.id, observer, now, Astronomy.Rise);
+                    const set = calculateRiseSet(b.id, observer, now, Astronomy.Set);
+                    const riseStr = fmt(rise);
+                    const setStr = fmt(set);
+
+                    let sign = '';
+                    if (b.id === 'Sun') {
+                        sign = ` · ${zSign}`;
+                    } else {
+                        const lon = getPlanetEclipticLongitude(b.id, now);
+                        if (lon !== null) sign = ` · ${signFromLon(lon)}`;
+                    }
+
+                    rows.push(`
+                        <tr>
+                            <td class="body-name"><span class="symbol ${b.cls}">${b.symbol}</span> ${b.name}</td>
+                            <td class="time">${riseStr}</td>
+                            <td class="time">${setStr}</td>
+                            <td class="info">${sign}</td>
+                        </tr>
+                    `);
+                } catch (e) {
+                    rows.push(`
+                        <tr>
+                            <td class="body-name"><span class="symbol ${b.cls}">${b.symbol}</span> ${b.name}</td>
+                            <td colspan="3" class="info">—</td>
+                        </tr>
+                    `);
+                }
+            });
+
+            // Lilith
+            try {
+                const lon = lilithLon(now);
+                if (lon !== null) {
+                    rows.push(`
+                        <tr>
+                            <td class="body-name"><span class="symbol symbol-lilith">⚸</span> Lilith (Black Moon)</td>
+                            <td class="time">—</td>
+                            <td class="time">—</td>
+                            <td class="info">${signFromLon(lon)} (≈${lon.toFixed(1)}°)</td>
+                        </tr>
+                    `);
+                } else {
+                    rows.push(`
+                        <tr>
+                            <td class="body-name"><span class="symbol symbol-lilith">⚸</span> Lilith</td>
+                            <td colspan="3" class="info">—</td>
+                        </tr>
+                    `);
+                }
+            } catch (e) {
+                rows.push(`
+                    <tr>
+                        <td class="body-name"><span class="symbol symbol-lilith">⚸</span> Lilith</td>
+                        <td colspan="3" class="info">—</td>
+                    </tr>
+                `);
+            }
+
+            document.getElementById('skyTableContainer').innerHTML = `
+                <table class="sky-table">
+                    <thead>
+                        <tr><th>Gök Cismi</th><th>Doğuş</th><th>Batış</th><th>Burç / Not</th></tr>
+                    </thead>
+                    <tbody>
+                        ${rows.join('')}
+                    </tbody>
+                </table>
+                <div style="margin-top:.8rem;font-size:.7rem;color:#6a5f53;text-align:right;">
+                    * Yaklaşık değerler, ±2 dakika hata olabilir.
+                </div>
+            `;
+        }
+
+        // ============================================================
+        // 6. KONUM
+        // ============================================================
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                pos => { lat = pos.coords.latitude;
+                    lng = pos.coords.longitude;
+                    locReady = true;
+                    renderSky(); },
+                () => { locReady = true;
+                    renderSky(); },
+                { timeout: 8000, enableHighAccuracy: true }
+            );
+        } else {
+            locReady = true;
+            renderSky();
+        }
+
+        // ============================================================
+        // 7. STATİK İÇERİK
         // ============================================================
         function renderStatic() {
             const now = new Date(),
@@ -700,145 +833,6 @@
                     <span style="font-size:1.4rem;">⚡</span> Bu ritüel, hem geleneksel cadı pratiğinden hem de modern farkındalık tekniklerinden esinlenmiştir.
                 </div>`;
         }
-
-        // ============================================================
-        // 6. SIRALI GÖKYÜZÜ HESAPLAMA (setTimeout ile teker teker)
-        // ============================================================
-        const BODIES = [
-            { id: 'Sun', name: 'Güneş', symbol: '☉', cls: 'symbol-sun' },
-            { id: 'Moon', name: 'Ay', symbol: '☽', cls: 'symbol-moon' },
-            { id: 'Mercury', name: 'Merkür', symbol: '☿', cls: 'symbol-mercury' },
-            { id: 'Venus', name: 'Venüs', symbol: '♀', cls: 'symbol-venus' },
-            { id: 'Mars', name: 'Mars', symbol: '♂', cls: 'symbol-mars' },
-            { id: 'Jupiter', name: 'Jüpiter', symbol: '♃', cls: 'symbol-jupiter' },
-            { id: 'Saturn', name: 'Satürn', symbol: '♄', cls: 'symbol-saturn' },
-            { id: 'Uranus', name: 'Uranüs', symbol: '♅', cls: 'symbol-uranus' },
-            { id: 'Neptune', name: 'Neptün', symbol: '♆', cls: 'symbol-neptune' }
-        ];
-
-        let skyRows = [],
-            bodyIdx = 0,
-            skyDone = false,
-            lat = 41.0082,
-            lng = 28.9784,
-            locReady = false,
-            zSign = zodiac(),
-            observer = null;
-
-        function updateSkyTable() {
-            document.getElementById('skyTableContainer').innerHTML = `
-                <table class="sky-table">
-                    <thead><tr><th>Gök Cismi</th><th>Doğuş</th><th>Batış</th><th>Burç / Not</th></tr></thead>
-                    <tbody>
-                        ${skyRows.join('')}
-                        ${bodyIdx < BODIES.length ? '<tr class="loading-row"><td colspan="4">⏳ Hesaplanıyor…</td></tr>' : ''}
-                    </tbody>
-                </table>
-                <div style="margin-top:.8rem;font-size:.7rem;color:#6a5f53;text-align:right;">
-                    * Yaklaşık değerler, ±2 dakika hata olabilir.
-                </div>`;
-        }
-
-        function renderBody(idx) {
-            if (idx >= BODIES.length) {
-                // Lilith ekle
-                const lon = lilithLon(new Date());
-                if (lon !== null) {
-                    skyRows.push(
-                        `<tr><td class="body-name"><span class="symbol symbol-lilith">⚸</span> Lilith (Black Moon)</td><td class="time">—</td><td class="time">—</td><td class="info">${signFromLon(lon)} (≈${lon.toFixed(1)}°)</td></tr>`
-                        );
-                } else {
-                    skyRows.push(
-                        `<tr><td class="body-name"><span class="symbol symbol-lilith">⚸</span> Lilith</td><td colspan="3" class="info">—</td></tr>`
-                        );
-                }
-                skyDone = true;
-                updateSkyTable();
-                console.log('✅ Gökyüzü tamamlandı.');
-                return;
-            }
-
-            const b = BODIES[idx];
-            const now = new Date();
-
-            try {
-                // Doğuş ve batış hesapla (5. parametre dayLimit=300)
-                const rise = calculateRiseSet(b.id, observer, now, Astronomy.Rise);
-                const set = calculateRiseSet(b.id, observer, now, Astronomy.Set);
-                const riseStr = fmt(rise);
-                const setStr = fmt(set);
-
-                // Burç bilgisi
-                let sign = '';
-                if (b.id !== 'Sun' && b.id !== 'Moon') {
-                    const lon = getPlanetEclipticLongitude(b.id, now);
-                    if (lon !== null) sign = ` · ${signFromLon(lon)}`;
-                } else if (b.id === 'Sun') {
-                    sign = ` · ${zSign}`;
-                } else {
-                    const lon = getPlanetEclipticLongitude(b.id, now);
-                    if (lon !== null) sign = ` · ${signFromLon(lon)}`;
-                }
-
-                skyRows.push(
-                    `<tr><td class="body-name"><span class="symbol ${b.cls}">${b.symbol}</span> ${b.name}</td><td class="time">${riseStr}</td><td class="time">${setStr}</td><td class="info">${sign}</td></tr>`
-                    );
-
-            } catch (e) {
-                console.error(`${b.name} hatası:`, e);
-                skyRows.push(
-                    `<tr><td class="body-name"><span class="symbol ${b.cls}">${b.symbol}</span> ${b.name}</td><td colspan="3" class="info">—</td></tr>`
-                    );
-            }
-
-            bodyIdx = idx + 1;
-            updateSkyTable();
-
-            // SIRALI HESAPLAMA: 50ms gecikme ile devam et (DOĞRU ÇALIŞAN)
-            setTimeout(() => renderBody(bodyIdx), 50);
-        }
-
-        function renderSky() {
-            if (skyDone) return;
-            if (typeof Astronomy === 'undefined') {
-                document.getElementById('skyTableContainer').innerHTML =
-                    '<div class="sky-loading">⏳ Astronomi verileri yükleniyor…</div>';
-                setTimeout(renderSky, 2000);
-                return;
-            }
-            if (!locReady) {
-                document.getElementById('skyTableContainer').innerHTML =
-                    '<div class="sky-loading">📍 Konum bekleniyor…</div>';
-                setTimeout(renderSky, 1000);
-                return;
-            }
-
-            // Observer'ı oluştur
-            observer = new Astronomy.Observer(lat, lng, 0);
-            document.getElementById('locationDisplay').textContent =
-                `📍 Enlem: ${lat.toFixed(4)}°, Boylam: ${lng.toFixed(4)}°`;
-
-            // Sıralı hesaplamayı başlat
-            skyRows = [];
-            bodyIdx = 0;
-            zSign = zodiac();
-            renderBody(0);
-        }
-
-        // ============================================================
-        // 7. KONUM
-        // ============================================================
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                pos => { lat = pos.coords.latitude;
-                    lng = pos.coords.longitude;
-                    locReady = true;
-                    renderSky(); },
-                () => { locReady = true;
-                    renderSky(); }, { timeout: 8000, enableHighAccuracy: true }
-            );
-        } else { locReady = true;
-            renderSky(); }
 
         // ============================================================
         // 8. BAŞLAT
