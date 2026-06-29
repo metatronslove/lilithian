@@ -7,10 +7,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/astronomy-engine@2.1.19/astronomy.min.js"></script>
-    <script src="https://unpkg.com/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
+    <!-- SADECE TARAYICI SÜRÜMÜ -->
+    <script src="https://unpkg.com/astronomy-engine@2.1.19/astronomy.browser.min.js">
+    </script>
     <style>
-        /* ===== STILLER (ÖNCEKİYLE AYNI, KISALTMADIM) ===== */
+        /* ===== TÜM STILLER (ÖNCEKİYLE AYNI) ===== */
         * {
             margin: 0;
             padding: 0;
@@ -497,7 +498,7 @@
 
     <script>
         // ============================================================
-        // 0. KAN DAMLASI (ÖNCEKİYLE AYNI)
+        // 0. KAN DAMLASI
         // ============================================================
         document.addEventListener('click', e => {
             const x = e.clientX,
@@ -567,7 +568,7 @@
         });
 
         // ============================================================
-        // 3. VERİ (AYNI)
+        // 3. VERİ
         // ============================================================
         const MOON_PHASES = ['Yeni Ay', 'Hilal', 'İlk Dördün', 'Şişkin Ay (Büyüyen)',
             'Dolunay', 'Şişkin Ay (Azalan)', 'Son Dördün', 'Son Hilal'
@@ -619,7 +620,7 @@
         };
 
         // ============================================================
-        // 4. ASTRONOMİ (DÜZELTİLDİ – DOĞRU PARAMETRELER)
+        // 4. ASTRONOMİ (DOĞRU – SADECE TARAYICI KÜTÜPHANESİ)
         // ============================================================
         const fmt = d => d && d instanceof Date && !isNaN(d) ? String(d.getHours()).padStart(2, '0') + ':' + String(d
             .getMinutes()).padStart(2, '0') : '—';
@@ -630,10 +631,10 @@
                 const startOfDay = new Date(date);
                 startOfDay.setHours(0, 0, 0, 0);
 
-                // DOĞRU: 5. parametre horizon (varsayılan -0.833 derece)
-                // Ben açıkça -0.833 veriyorum
-                const horizon = -0.833; // gün doğumu için standart ufuk açısı
+                // 5. parametre horizon: -0.833 derece (gün doğumu/gün batımı için standart)
+                const horizon = -0.833;
 
+                // DOĞRU ÇAĞRI: 5 parametre
                 const rise = Astronomy.SearchRiseSet(body, obs, Astronomy.Rise, startOfDay, horizon);
                 const set = Astronomy.SearchRiseSet(body, obs, Astronomy.Set, startOfDay, horizon);
 
@@ -701,7 +702,7 @@
         }
 
         // ============================================================
-        // 6. ASENKRON GÖKYÜZÜ (SIRALI) – DÜZELTİLDİ
+        // 6. ASENKRON GÖKYÜZÜ (SIRALI)
         // ============================================================
         const BODIES = [
             { id: Astronomy.Body.Sun, name: 'Güneş', symbol: '☉', cls: 'symbol-sun' },
@@ -736,7 +737,6 @@
 
         function renderBody(idx) {
             if (idx >= BODIES.length) {
-                // Lilith ekle
                 const lon = lilithLon(new Date());
                 if (lon !== null) skyRows.push(
                     `<tr><td class="body-name"><span class="symbol symbol-lilith">⚸</span> Lilith (Black Moon)</td><td class="time">—</td><td class="time">—</td><td class="info">${signFromLon(lon)} (≈${lon.toFixed(1)}°)</td></tr>`
